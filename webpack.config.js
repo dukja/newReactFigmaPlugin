@@ -43,5 +43,5 @@ module.exports = (env, argv) => ({
       cache: false,
     }),
     new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/ui/]),
-  ],
+  ]
 });
