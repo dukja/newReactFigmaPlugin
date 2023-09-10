@@ -33,9 +33,11 @@ function App(props: Props) {
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_name') {
         setNodeName(eventData.pluginMessage.nodeName);
+        setLoading(false);
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_selected') {
         setNodeSelected(eventData.pluginMessage.seletedNode);
+        setLoading(false);
       }
     };
   }, []);
@@ -76,12 +78,10 @@ function App(props: Props) {
                     </Typography>
                     <Stack direction={"row"} spacing={1}>
                     {
-                       nodeStyle? 
-                       <Button onClick={handleCopy} variant="contained">Copy</Button>:
-                        (loading? 
-                          <LoadingButton loading loadingPosition="start" variant="contained">Loading</LoadingButton>:
-                          <Button onClick={handleLoading} variant="outlined">Start</Button>
-                        ) 
+                      loading? 
+                      <LoadingButton loading loadingPosition="start" variant="contained">Loading</LoadingButton>:
+                      <><Button onClick={handleLoading} variant="outlined">Start</Button>
+                      <Button onClick={handleCopy} variant="contained">Copy</Button></>
                     }
                     </Stack>
                   </Stack>
