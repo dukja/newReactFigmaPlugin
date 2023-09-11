@@ -11,15 +11,15 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import {CustomTabPanel, a11yProps} from "./CustomTabPanel"
 import {ScrollTop, Props} from "./ScrollTop"
 import {ContentBox} from "./ContentBox"
-
-
 function App(props: Props) {
   const [loading, setLoading] = useState(false);
   const [nodeStyle, setNodeStyle] = useState(null);
   const [nodeName, setNodeName] = useState(null);
   const [seletedNode, setNodeSelected] = useState(null);
   const [value, setValue] = React.useState(0);
-  const nodeStyleContentRef = useRef(null);
+  const styleContentRef = useRef<HTMLPreElement | null>(null);
+const nameContentRef = useRef<HTMLPreElement | null>(null);
+const selectedContentRef = useRef<HTMLPreElement | null>(null);
   const handleChange = (_event: React.SyntheticEvent,newValue: number) => {
     setValue(newValue);
   };
@@ -46,22 +46,31 @@ function App(props: Props) {
     setLoading(true);
     window.parent.postMessage({ pluginMessage: { type: 'request_info' } }, '*');
   }
-  const handleCopy = () => {
-    const nodeStyleContentRef = useRef<HTMLPreElement | null>(null);
-    const content = nodeStyleContentRef.current?.textContent;
 
+
+  const handleCopy = async () => {
+    let content;
+
+    if (value === 0) {
+        content = styleContentRef.current?.textContent;
+    } else if (value === 1) {
+        content = nameContentRef.current?.textContent;
+    } else if (value === 2) {
+        content = selectedContentRef.current?.textContent;
+    }
     if (content) {
-        const el = document.createElement('textarea');
-        el.value = content;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert("Copied to clipboard!");  // 복사 완료 
+      const el = document.createElement('textarea');
+      el.value = content;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      alert("Copied to clipboard!");  // 복사 완료 
     } else {
         alert("Failed to copy!");  // 복사 실패
     }
-  }
+};
+
 
   function handleGetInfo () {
     window.parent.postMessage({ pluginMessage: { type: 'request_selected' } }, '*');
@@ -79,7 +88,7 @@ function App(props: Props) {
                     <Stack direction={"row"} spacing={1}>
                     {
                       loading? 
-                      <LoadingButton loading loadingPosition="start" variant="contained">Loading</LoadingButton>:
+                      <LoadingButton size="small" onClick={handleLoading} loading={loading} variant="outlined">Loading</LoadingButton>:
                       <><Button onClick={handleLoading} variant="outlined">Start</Button>
                       <Button onClick={handleCopy} variant="contained">Copy</Button></>
                     }
@@ -98,13 +107,21 @@ function App(props: Props) {
             <Box id="back-to-top-anchor" />
             <Box sx={{marginTop:"114px"}}>
               <CustomTabPanel value={value} index={0}>
-                <ContentBox conditionData={nodeStyle} contentData={nodeStyle} contentRef={nodeStyleContentRef} children={undefined} preMsg={`[START]를 클릭하고 기다려주세요`}/>
+                <ContentBox>
+                  <Typography color="text.secondary" variant="caption"><pre ref={styleContentRef} id="nodeStyleContent">    
+                  {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
+                </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={1}>
-                <ContentBox conditionData={nodeStyle} contentData={nodeName} contentRef={nodeStyleContentRef} children={undefined} preMsg={`[START]를 클릭하고 기다려주세요`}/>
+                <ContentBox>
+                <Typography color="text.secondary" variant="caption"><pre ref={nameContentRef} id="nodeStyleContent">    
+                  {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
+                  </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={2}>
-                <ContentBox conditionData={seletedNode} contentData={seletedNode} contentRef={nodeStyleContentRef} preMsg={`에셋을 선택하고 [GET INFO]을 클릭해 주세요`}>
+                <ContentBox>
+                  <Typography color="text.secondary" variant="caption"><pre ref={selectedContentRef} id="nodeStyleContent">    
+                  {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</pre></Typography> 
                   <Button onClick={handleGetInfo} variant="contained">GET INFO</Button>
                 </ContentBox>
               </CustomTabPanel>

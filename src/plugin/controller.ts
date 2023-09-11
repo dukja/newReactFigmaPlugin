@@ -1,7 +1,7 @@
 // 제외 페이지명
-const excludedPageNames = ['A1', 'A2', '🚫', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading'];
+const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading'];
 // 포함 노드 타입
-const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE'];
+const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','FRAME'];
 // 제외 노드명
 const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
 // 필터된 페이지
@@ -30,18 +30,8 @@ function getStyledNode(node: any): any {
     fill: null,
     stroke: null,
     effect: null,
+    font: null,
   };
-
-  if (node.fillStyleId) {
-    styles.fill = node;
-  }
-  if (node.strokeStyleId) {
-    styles.stroke = node;
-  }
-  if (node.effectStyleId) {
-    styles.effect = node;
-  }
-
   if ('children' in node) {
     for (let child of node.children) {
       let styledChild = getStyledNode(child);
@@ -54,8 +44,25 @@ function getStyledNode(node: any): any {
       if (styledChild.effect && !styles.effect) {
         styles.effect = styledChild.effect;
       }
+      if (styledChild.font && !styles.font) {
+        styles.font = styledChild.font;
+      }
     }
   }
+  if (node.fillStyleId) {
+    styles.fill = node;
+  }
+  if (node.strokeStyleId) {
+    styles.stroke = node;
+  }
+  if (node.effectStyleId) {
+    styles.effect = node;
+  }
+  if ('textStyleId' in node) { 
+    styles.font = node;
+  }
+
+
 
   return styles;
 }
@@ -72,6 +79,7 @@ const addStyleNameToNodeStyles = (styleId: any, targetArray: any) => {
   if (styleName && !targetArray.includes(styleName)) {
     return [...targetArray, styleName];
   }
+  
   return targetArray;
 };
 type NodeStyle = {
@@ -79,6 +87,7 @@ type NodeStyle = {
   fill: string[];
   stroke: string[];
   effect: string[];
+  font: string[];
   defaultVariant: string | null;
 };
 
@@ -101,18 +110,39 @@ function getNodeInfo() {
       pageName: page.name,
       nodes: [],
     };
-    removedNode.forEach((node: any) => {
+    type Node = {
+      type: string;
+      name: string;
+      children?: Node[];
+    };
+
+  let newNodesList: Node[] = [];
+  removedNode.forEach((node: any) => {
+    if(node.type === "FRAME"){
+      if(node.name.includes("🚫")){
+          if (node.children) {
+             console.log(node.children)
+              newNodesList = [...newNodesList, ...node.children];
+          }}
+      else{return}
+    }else{
+        newNodesList = [...newNodesList, node];
+    }})
+    newNodesList.forEach((node: any) => {
       const nodeInfo = {
         name: node.name,
         fill: [],
         stroke: [],
         effect: [],
+        font: [],
         defaultVariant: node.defaultVariant ? node.defaultVariant.name : null,
       };
       if ('children' in node) {
+        
         node.children.forEach((childNode: any) => {
           //스타일 노드
           const styleNodes = getStyledNode(childNode);
+          // console.log("styleNodes",styleNodes)
           //노드 스타일 정보
           if (styleNodes.fill) {
             nodeInfo.fill = addStyleNameToNodeStyles(styleNodes.fill.fillStyleId, nodeInfo.fill);
@@ -122,9 +152,12 @@ function getNodeInfo() {
           }
           if (styleNodes.effect) {
             nodeInfo.effect = addStyleNameToNodeStyles(styleNodes.effect.effectStyleId, nodeInfo.effect);
+            
+          }
+          if (styleNodes.font) {
+            nodeInfo.font = addStyleNameToNodeStyles(styleNodes.font.textStyleId, nodeInfo.font);
           }
         });
-
         nodesinfo.nodes = [...nodesinfo.nodes, nodeInfo];
       }
     });
@@ -140,6 +173,7 @@ function getSelectedNodeInfo(selectednNode: any) {
     fill: [],
     stroke: [],
     effect: [],
+    font: [],
     defaultVariant: selectednNode.defaultVariant ? selectednNode.defaultVariant.name : null,
   };
   if ('children' in selectednNode) {
@@ -155,6 +189,10 @@ function getSelectedNodeInfo(selectednNode: any) {
       }
       if (styleNodes.effect) {
         selectednNodeinfo.effect = addStyleNameToNodeStyles(styleNodes.effect.effectStyleId, selectednNodeinfo.effect);
+      }
+      if (styleNodes.font) {
+        console.log('font')
+        selectednNodeinfo.font = addStyleNameToNodeStyles(styleNodes.font.textStyleId, selectednNodeinfo.font);
       }
     });
   }
