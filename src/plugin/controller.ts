@@ -261,9 +261,9 @@ function getSelectedNodeInfo(selectednNodes: any) {
       const styleNodes = getStyledNode(childNode);
       // console.log('styleNodes', styleNodes )
       //노드 스타일 정보
-      if (selectednNode.name) {
-        selectednNodeinfo.name = selectednNode.parent.type !== 'PAGE'? getInArray(selectednNodeinfo.name,selectednNode.parent.name): getInArray(selectednNodeinfo.name,selectednNode.name)
-        console.log('name', selectednNode.parent.type)
+      if (selectednNodes.name) {
+        selectednNodeinfo.name = selectednNodes.parent.type !== 'PAGE'? getInArray(selectednNodeinfo.name,selectednNodes.parent.name): getInArray(selectednNodeinfo.name,selectednNodes.name)
+        console.log('name', selectednNodes.parent.type)
       }
       if (styleNodes.stroke) {
         selectednNodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, selectednNodeinfo.stroke);
