@@ -108,20 +108,20 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
             <Stack sx={{marginTop:"114px"}}>
               <CustomTabPanel value={value} index={0}>
                 <ContentBox>
-                  <Typography component="div" color="text.secondary" variant="caption"><pre ref={styleContentRef} id="nodeStyleContent">    
-                  {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
+                  <pre ref={styleContentRef} id="nodeStyleContent">   <Typography component="div" color="text.secondary" variant="caption"> 
+                  {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography></pre> 
                 </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={1}>
                 <ContentBox>
-                <Typography component="div" color="text.secondary" variant="caption"><pre ref={nameContentRef} id="nodeStyleContent">    
-                  {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
+                <pre ref={nameContentRef} id="nodeStyleContent"><Typography component="div" color="text.secondary" variant="caption">  
+                  {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography></pre> 
                   </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={2}>
                 <ContentBox>
-                  <Typography component="div" color="text.secondary" variant="caption"><pre ref={selectedContentRef} id="nodeStyleContent">    
-                  {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</pre></Typography> 
+                  <pre ref={selectedContentRef} id="nodeStyleContent"><Typography component="div" color="text.secondary" variant="caption">    
+                  {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</Typography></pre> 
                   <Button onClick={handleGetInfo} variant="contained">GET INFO</Button>
                 </ContentBox>
               </CustomTabPanel>

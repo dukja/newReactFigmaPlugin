@@ -58,7 +58,6 @@ function getStyledNode(node: any): any {
         styles.font = styledChild.font;
       }
       if (styles.radius !== undefined && styledChild.topLeftRadius) {
-        // console.log('radius2',styledChild.topLeftRadius)
         styles.radius =styledChild.topLeftRadius
       }
       if (styles.padding !== undefined && styledChild.paddingBottom || styledChild.paddingLeft || styledChild.paddingRight||styledChild.paddingTop) {
@@ -85,7 +84,6 @@ function getStyledNode(node: any): any {
     styles.font = node;
   }
   if (node.topLeftRadius) {
-    // console.log('radius1',node.topLeftRadius)
     styles.radius = node;
   }
   if (node.paddingBottom || node.paddingLeft || node.paddingRight||node.paddingTop) {
@@ -225,7 +223,6 @@ function getNodeInfo() {
             nodeInfo.height = childNode.height
           }      
           if (styleNodes.radius) {
-            console.log(styleNodes.radius.topLeftRadius)
             nodeInfo.radius = styleNodes.radius.topLeftRadius
           }
           if (styleNodes.padding) {
@@ -255,44 +252,48 @@ function getSelectedNodeInfo(selectednNodes: any) {
     padding: [],
     defaultVariant: selectednNodes.defaultVariant ? selectednNodes.defaultVariant.name : null,
   };
-  if ('children' in selectednNodes) {
-    selectednNodes.children.forEach((childNode: any) => {
-      //스타일 노드
-      const styleNodes = getStyledNode(childNode);
-      // console.log('styleNodes', styleNodes )
-      //노드 스타일 정보
-      if (selectednNodes.name) {
-        selectednNodeinfo.name = selectednNodes.parent.type !== 'PAGE'? getInArray(selectednNodeinfo.name,selectednNodes.parent.name): getInArray(selectednNodeinfo.name,selectednNodes.name)
-        console.log('name', selectednNodes.parent.type)
-      }
-      if (styleNodes.stroke) {
-        selectednNodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, selectednNodeinfo.stroke);
-      }          
-      if (styleNodes.fills) {
-        selectednNodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
-      }
-      if (styleNodes.strokes) {
-        selectednNodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
-      }
-      if (styleNodes.effect) {
-        selectednNodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, selectednNodeinfo.effect);
-      }
-      if (styleNodes.font) {
-        selectednNodeinfo.font = setStyleNameToNodeStyles(styleNodes.font.textStyleId, selectednNodeinfo.font);
-      }
-      if (childNode.height) {
-        selectednNodeinfo.height = childNode.height;
-      }
-      if (styleNodes.radius) {
-        console.log('radius',styleNodes.radius)
-        selectednNodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
-      }
-      if (styleNodes.padding) {
-        selectednNodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
-      }
-    });
-  }
-  selectednNodeinfos = [selectednNodeinfo];
+  console.log('selectednNodes',selectednNodes)
+  selectednNodes.forEach((selectednNode)=>{
+    if ('children' in selectednNode) {
+      selectednNode.children.forEach((childNode: any) => {
+        //스타일 노드
+        const styleNodes = getStyledNode(childNode);
+        
+        //노드 스타일 정보
+        if (selectednNode.name) {
+          selectednNodeinfo.name = selectednNode.parent.type !== 'PAGE'? getInArray(selectednNodeinfo.name,selectednNode.parent.name): getInArray(selectednNodeinfo.name,selectednNode.name)
+        }
+        if (styleNodes.stroke) {
+          selectednNodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, selectednNodeinfo.stroke);
+        }          
+        if (styleNodes.fills) {
+          selectednNodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
+        }
+        if (styleNodes.strokes) {
+          selectednNodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
+        }
+        if (styleNodes.effect) {
+          selectednNodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, selectednNodeinfo.effect);
+        }
+        if (styleNodes.font) {
+          selectednNodeinfo.font = setStyleNameToNodeStyles(styleNodes.font.textStyleId, selectednNodeinfo.font);
+        }
+        if (childNode.height) {
+          selectednNodeinfo.height = childNode.height;
+        }
+        if (styleNodes.radius) {
+          selectednNodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
+        }
+        if (styleNodes.padding) {
+          selectednNodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
+        }
+      });
+    }    
+    selectednNodeinfos = [...selectednNodeinfos, selectednNodeinfo];
+  })
+
+
+  
 }
 
 figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
@@ -319,8 +320,9 @@ figma.ui.onmessage = (message) => {
     nodeName: nodeNames,
   });
   if (message.type === 'request_selected') {
-    if (figma.currentPage.selection[0] !== null) {
-      getSelectedNodeInfo(figma.currentPage.selection[0]);
+    selectednNodeinfos = []
+    if (figma.currentPage.selection !== null) {
+      getSelectedNodeInfo(figma.currentPage.selection);
     }
   }
   figma.ui.postMessage({
