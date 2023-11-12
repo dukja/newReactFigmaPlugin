@@ -78,7 +78,7 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
   return (
         <main>
           <Container maxWidth="md">
-            <Box sx={{position: 'fixed',top:"20px", left:"16px",right:"16px" ,backgroundColor:"rgba(255, 255, 255, 0.8)"}}  >
+            <Stack sx={{position: 'fixed',top:"20px", left:"16px",right:"16px" ,backgroundColor:"rgba(255, 255, 255, 0.8)"}}  >
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <Stack direction={"row"} alignItems="center" justifyContent="space-between" spacing={2} sx={{backgroundColor:"rgba(0, 0, 0, 0.05)",padding:"12px", borderRadius:"12px"}}>
@@ -103,29 +103,29 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
                     </Tabs>
                 </Grid>
               </Grid>        
-            </Box>
-            <Box id="back-to-top-anchor" />
-            <Box sx={{marginTop:"114px"}}>
+            </Stack>
+            <Stack id="back-to-top-anchor" />
+            <Stack sx={{marginTop:"114px"}}>
               <CustomTabPanel value={value} index={0}>
                 <ContentBox>
-                  <Typography color="text.secondary" variant="caption"><pre ref={styleContentRef} id="nodeStyleContent">    
+                  <Typography component="div" color="text.secondary" variant="caption"><pre ref={styleContentRef} id="nodeStyleContent">    
                   {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
                 </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={1}>
                 <ContentBox>
-                <Typography color="text.secondary" variant="caption"><pre ref={nameContentRef} id="nodeStyleContent">    
+                <Typography component="div" color="text.secondary" variant="caption"><pre ref={nameContentRef} id="nodeStyleContent">    
                   {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</pre></Typography> 
                   </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={2}>
                 <ContentBox>
-                  <Typography color="text.secondary" variant="caption"><pre ref={selectedContentRef} id="nodeStyleContent">    
+                  <Typography component="div" color="text.secondary" variant="caption"><pre ref={selectedContentRef} id="nodeStyleContent">    
                   {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</pre></Typography> 
                   <Button onClick={handleGetInfo} variant="contained">GET INFO</Button>
                 </ContentBox>
               </CustomTabPanel>
-            </Box>
+            </Stack>
           </Container>
           <ScrollTop {...props}/>        
         </main>
