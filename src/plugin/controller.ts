@@ -252,7 +252,6 @@ function getSelectedNodeInfo(selectednNodes: any) {
     padding: [],
     defaultVariant: selectednNodes.defaultVariant ? selectednNodes.defaultVariant.name : null,
   };
-  console.log('selectednNodes',selectednNodes)
   selectednNodes.forEach((selectednNode)=>{
     if ('children' in selectednNode) {
       selectednNode.children.forEach((childNode: any) => {
