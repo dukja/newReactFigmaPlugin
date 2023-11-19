@@ -1,7 +1,8 @@
+
 // 제외 페이지명
 const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading'];
 // 포함 노드 타입
-const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','FRAME'];
+const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','FRAME','TEXT'];
 // 제외 노드명
 const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
 // 필터된 페이지
@@ -32,39 +33,12 @@ function getStyledNode(node: any): any {
     stroke: undefined,
     strokes: undefined,
     effect: undefined,
+    text: undefined,
     font: undefined,
     radius: undefined,
     padding: undefined,
   };
-  if ('children' in node) {
-    for (let child of node.children) {
-      let styledChild = getStyledNode(child);
-      if (styles.fill !== undefined && styledChild.fill  ) {
-        styles.fill = styledChild.fill;
-      }
-      if (styles.stroke !== undefined && styledChild.stroke  ) {
-        styles.stroke = styledChild.stroke;
-      }
-      if (styles.fills !== undefined && styledChild.fills && styledChild.fills[0] && styledChild.fills[0].boundVariables && styledChild.fills[0].boundVariables['color'] && styledChild.fills[0].boundVariables['color'].id!== undefined) {
-        styles.fills = styledChild.fills
-      }  
-      if (styles.strokes !== undefined && styledChild.strokes && styledChild.strokes[0] && styledChild.strokes[0].boundVariables && styledChild.strokes[0].boundVariables['color'] && styledChild.strokes[0].boundVariables['color'].id ) {
-        styles.strokes = styledChild.strokes
-      }  
-      if (styles.effect !== undefined && styledChild.effect  ) {
-        styles.effect = styledChild.effect;
-      }
-      if (styles.font !== undefined && styledChild.font) {
-        styles.font = styledChild.font;
-      }
-      if (styles.radius !== undefined && styledChild.topLeftRadius) {
-        styles.radius =styledChild.topLeftRadius
-      }
-      if (styles.padding !== undefined && styledChild.paddingBottom || styledChild.paddingLeft || styledChild.paddingRight||styledChild.paddingTop) {
-        styles.padding = styledChild.padding;
-      }
-    }
-  }  
+  
   if (node.fillStyleId) {
     styles.fill = node;
   }
@@ -81,17 +55,48 @@ function getStyledNode(node: any): any {
     styles.effect = node;
   }
   if ('textStyleId' in node) { 
-    styles.font = node;
+    styles.font = getStyleName(node.textStyleId);
+    // console.log(node.textStyleId,getStyleName(node.textStyleId));
   }
-  if (node.topLeftRadius) {
+  console.log("styles",styles)
+  if (node.topLeftRadius || node.topRightRadius || node.bottomLeftRadius || node.bottomRightRadius) {
     styles.radius = node;
   }
   if (node.paddingBottom || node.paddingLeft || node.paddingRight||node.paddingTop) {
     styles.padding = node;
   }
-
+  if ('children' in node) {
+    for (let child of node.children) {
+      let styledChild = getStyledNode(child);
+      if (styles.fill === undefined && styledChild.fillStyleId !== undefined ) {
+        styles.fill = styledChild;
+      }
+      if (styles.stroke === undefined && styledChild.strokeStyleId !== undefined  ) {
+        styles.stroke = styledChild;
+      }
+      if (styles.fills === undefined && styledChild.fills && styledChild.fills[0] && styledChild.fills[0].boundVariables && styledChild.fills[0].boundVariables['color'] && styledChild.fills[0].boundVariables['color'].id=== undefined) {
+        styles.fills = styledChild
+      }  
+      if (styles.strokes === undefined && styledChild.strokes && styledChild.strokes[0] && styledChild.strokes[0].boundVariables && styledChild.strokes[0].boundVariables['color'] && styledChild.strokes[0].boundVariables['color'].id !== undefined) {
+        styles.strokes = styledChild
+      }  
+      if (styles.effect === undefined && styledChild.effectStyleId !== undefined  ) {
+        styles.effect = styledChild;
+      }
+      if (styles.font === undefined && 'textStyleId' in styledChild) {
+        styles.font = getStyleName(styledChild.textStyleId);
+      }
+      if (styles.radius === undefined && styledChild.topLeftRadius || styledChild.topRightRadius || styledChild.bottomLeftRadius || styledChild.bottomRightRadius) {
+        styles.radius =styledChild
+      }
+      if (styles.padding === undefined && styledChild.paddingBottom || styledChild.paddingLeft || styledChild.paddingRight||styledChild.paddingTop) {
+        styles.padding = styledChild;
+      }
+    }
+  }  
 
   return styles;
+ 
 }
 
 // 스타일 이름
@@ -131,7 +136,7 @@ type NodeStyle = {
   fills: string[];
   strokes: string[];
   effect: string[];
-  font: string[];
+  text: string[];
   height: number[];
   radius: number[];
   padding: number[];
@@ -237,63 +242,65 @@ function getNodeInfo() {
 }
 
 // 선택 노드 정보
-let selectednNodeinfos: any[] = []; // 배열로 초기화
-function getSelectedNodeInfo(selectednNodes: any) {
-  const selectednNodeinfo = {
+let selectedNodeinfos: any[] = []; // 배열로 초기화
+function getSelectedNodeInfo(selectedNodes: any) {
+  const selectedNodeinfo = {
     name: [],
     fill: [],
-    fills: [],
+    fills: undefined,
     stroke: [],
-    strokes: [],
+    strokes:undefined,
     effect: [],
-    font: [],
+    font: undefined,
     height: [],
     radius: [],
     padding: [],
-    defaultVariant: selectednNodes.defaultVariant ? selectednNodes.defaultVariant.name : null,
+    defaultVariant: selectedNodes.defaultVariant ? selectedNodes.defaultVariant.name : null,
   };
-  selectednNodes.forEach((selectednNode)=>{
-    if ('children' in selectednNode) {
-      selectednNode.children.forEach((childNode: any) => {
-        //스타일 노드
-        const styleNodes = getStyledNode(childNode);
-        
-        //노드 스타일 정보
-        if (selectednNode.name) {
-          selectednNodeinfo.name = selectednNode.parent.type !== 'PAGE'? getInArray(selectednNodeinfo.name,selectednNode.parent.name): getInArray(selectednNodeinfo.name,selectednNode.name)
-        }
-        if (styleNodes.stroke) {
-          selectednNodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, selectednNodeinfo.stroke);
-        }          
-        if (styleNodes.fills) {
-          selectednNodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
-        }
-        if (styleNodes.strokes) {
-          selectednNodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
-        }
-        if (styleNodes.effect) {
-          selectednNodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, selectednNodeinfo.effect);
-        }
-        if (styleNodes.font) {
-          selectednNodeinfo.font = setStyleNameToNodeStyles(styleNodes.font.textStyleId, selectednNodeinfo.font);
-        }
-        if (childNode.height) {
-          selectednNodeinfo.height = childNode.height;
-        }
-        if (styleNodes.radius) {
-          selectednNodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
-        }
-        if (styleNodes.padding) {
-          selectednNodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
-        }
-      });
-    }    
-    selectednNodeinfos = [...selectednNodeinfos, selectednNodeinfo];
-  })
-
-
   
+  if ('children' in selectedNodes) {
+    selectedNodes.children.forEach((childNode: any) => {
+      //스타일 노드
+      const styleNodes = getStyledNode(childNode);
+      console.log("font", styleNodes.font)
+      //노드 스타일 정보
+      if (selectedNodes.name) {
+        selectedNodeinfo.name = selectedNodes.parent.type !== 'PAGE'? getInArray(selectedNodeinfo.name,selectedNodes.parent.name): getInArray(selectedNodeinfo.name,selectedNodes.name)
+      }
+      if (styleNodes.fill) {
+        selectedNodeinfo.fill = setStyleNameToNodeStyles(styleNodes.fill.fillStyleId, selectedNodeinfo.fill);
+      }
+      if (styleNodes.stroke) {
+        selectedNodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, selectedNodeinfo.stroke);
+      }          
+      if (styleNodes.fills) {
+        selectedNodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
+      }
+      if (styleNodes.strokes) {
+        selectedNodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
+      }
+      if (styleNodes.effect) {
+        selectedNodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, selectedNodeinfo.effect);
+      }
+      if (styleNodes.font) {
+        selectedNodeinfo.font = setStyleNameToNodeStyles(styleNodes.font, selectedNodeinfo.font);
+        console.log("text")
+      }
+      if (childNode.height) {
+        selectedNodeinfo.height = childNode.height;
+      }
+      if (styleNodes.radius) {
+        selectedNodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
+      }
+      if (styleNodes.padding) {
+        selectedNodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
+      }
+    });
+    
+  }    
+  selectedNodeinfos = [selectedNodeinfo];
 }
+
 
 figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
 
@@ -319,13 +326,12 @@ figma.ui.onmessage = (message) => {
     nodeName: nodeNames,
   });
   if (message.type === 'request_selected') {
-    selectednNodeinfos = []
-    if (figma.currentPage.selection !== null) {
-      getSelectedNodeInfo(figma.currentPage.selection);
+    if (figma.currentPage.selection[0] !== null) {
+      getSelectedNodeInfo(figma.currentPage.selection[0]);
     }
   }
   figma.ui.postMessage({
     type: 'get_selected',
-    seletedNode: selectednNodeinfos,
+    seletedNode: selectedNodeinfos,
   });
 };

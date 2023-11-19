@@ -1,5 +1,4 @@
 import React, { useRef,useState ,useEffect} from "react";
-import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
@@ -25,7 +24,6 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
   };
   useEffect(() => {
     window.onmessage = (event) => {
-      console.log("Received message in App.tsx", event.data);
       const { data: eventData } = event;
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_style') {
         setNodeStyle(eventData.pluginMessage.nodeStyle);
@@ -88,7 +86,7 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
                     <Stack direction={"row"} spacing={1}>
                     {
                       loading? 
-                      <LoadingButton size="small" onClick={handleLoading} loading={loading} variant="outlined">Loading</LoadingButton>:
+                      <LoadingButton size="small" onClick={handleLoading} loading={loading} variant="contained">Loading</LoadingButton>:
                       <><Button onClick={handleLoading} variant="outlined">Start</Button>
                       <Button onClick={handleCopy} variant="contained">Copy</Button></>
                     }
@@ -108,20 +106,20 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
             <Stack sx={{marginTop:"114px"}}>
               <CustomTabPanel value={value} index={0}>
                 <ContentBox>
-                  <pre ref={styleContentRef} id="nodeStyleContent"><Typography color="text.secondary" variant="caption"> 
-                  {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography></pre> 
+                  <Typography ref={styleContentRef} id="nodeStyleContent" color="text.secondary" component={"pre"} variant="caption"> 
+                  {nodeStyle ?  JSON.stringify(nodeStyle, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography>
                 </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={1}>
                 <ContentBox>
-                <pre ref={nameContentRef} id="nodeStyleContent"><Typography color="text.secondary" variant="caption">  
-                  {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography></pre> 
+                <Typography ref={nameContentRef} id="nodeStyleContent" color="text.secondary" component={"pre"} variant="caption">  
+                  {nodeStyle ?  JSON.stringify(nodeName, null, 2): `[START]를 클릭하고 기다려주세요`}</Typography>
                   </ContentBox>
               </CustomTabPanel>
               <CustomTabPanel value={value} index={2}>
                 <ContentBox>
-                  <pre ref={selectedContentRef} id="nodeStyleContent"><Typography color="text.secondary" variant="caption">    
-                  {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</Typography></pre> 
+                  <Typography ref={selectedContentRef} id="nodeStyleContent" color="text.secondary" component={"pre"} variant="caption">    
+                  {seletedNode ?  JSON.stringify(seletedNode, null, 2): `에셋을 선택하고 [GET INFO]을 클릭해 주세요`}</Typography>
                   <Button onClick={handleGetInfo} variant="contained">GET INFO</Button>
                 </ContentBox>
               </CustomTabPanel>
