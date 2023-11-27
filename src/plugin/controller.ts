@@ -1,12 +1,12 @@
 // 제외 페이지명
-const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading'];
+const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading','📌CDS가 처음이신가요?'];
 // 포함 노드 타입
-const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','FRAME'];
+const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','SECTION'];
 // 제외 노드명
 const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
 // 필터된 페이지
 let removePage: any = null;
-function getremovePage() {
+function getRemovePage() {
   if (removePage === null) {
     removePage = figma.root.children.filter((page) => !isExcludedPage(page));
   }
@@ -104,25 +104,17 @@ function getStyleName(styleId: any) {
   }
 }
 
-// function getInArray (array,item) {
-//   let getArray;
-//   return array?.includes(item) ? getArray : getArray = [...array, item];
-// }
-
 function getInArray(array, item) {
   // array가 undefined거나 null일 경우 빈 배열로 초기화
   if (!array) {
-    return item
+    return [item]
   }
-
   // array에 item이 포함되어 있지 않다면 추가
-  if (!array.includes(item)) {
+  if (Array.isArray(array)&& !array.includes(item)) {
     array.push(item);
   }
-
   return array;
 }
-
 // 스타일 이름 추가 함수
 const setStyleNameToNodeStyles = (styleId, targetArray) => {
   // 노드 스타일 이름
@@ -134,156 +126,133 @@ const setStyleNameToNodeStyles = (styleId, targetArray) => {
   return setArray; // 중복되는 스타일 이름이 있으면 그냥 현재 배열을 반환
 };
 type NodeStyle = {
-  name: string;
-  fill: string[];
-  stroke: string[];
-  effect: string[];
-  font: string[];
-  defaultVariant: string | null;
+  name: string[]| null;
+  fill: string[]| null;
+  fills: string | null;
+  stroke: string[]| null;
+  strokes: string | null;
+  effect: string[]| null;
+  text: string[]| null;
+  height: string[]| null;
+  radius: string[]| null;
+  padding: string[]| null;
+  defaultVariant: string[] | null;
+  type: string[] | null;
 };
 
 type PageNodeInfo = {
   pageName: string;
-  nodes: NodeStyle[];
-};
-
-// 노드 정보
-let nodesinfos: any[] = []; // 배열로 초기화
-
-
-
-// 선택 노드 정보
-let selectedNodeinfos: any[] = []; // 배열로 초기화
-const selectedNodeinfo = {
-  name: [],
-  fill: [],
-  fills: undefined,
-  stroke: [],
-  strokes: undefined,
-  effect: [],
-  text: [],
-  height: [],
-  radius: [],
-  padding: [],
-  defaultVariant: [],
-};
-function setNodeInfo(node,info){
-    if ('children' in node) {
-      node.children.forEach((childNode: any) => {
-        //스타일 노드
-        const styleNodes = getStyledNode(childNode);
-        //노드 스타일 정보
-        if (node.name) {
-          info.name = node.parent.type !== 'PAGE'? getInArray(info.name,node.parent.name): getInArray(info.name,node.name)
-        }
-        if (styleNodes.fill) {
-          info.fill = setStyleNameToNodeStyles(styleNodes.fill.fillStyleId, info.fill);
-        }
-        if (styleNodes.stroke) {
-          info.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, info.stroke);
-        }
-        if (styleNodes.fills) {
-          info.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
-        }
-        if (styleNodes.strokes) {
-          info.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
-        }
-        if (styleNodes.effect) {
-          info.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, info.effect);
-        }
-        if (styleNodes.text) {
-          info.text = setStyleNameToNodeStyles(styleNodes.text.textStyleId, info.text);
-        }
-        if (childNode.height) {
-          info.height = childNode.height;
-        }
-        if (styleNodes.radius) {
-          info.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
-        }
-        if (styleNodes.padding) {
-          info.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
-        }
-        if (node.defaultVariant) {
-          info.defaultVariant = node.defaultVariant ? node.defaultVariant.name : null;
-        }
-      });
-    }
+  nodeCount: number;
+  nodes: NodeStyle[]; 
 }
+
+function setNodeInfo(node: any): NodeStyle{
+  let nodeinfo: NodeStyle = {
+    name: [],
+    fill: [],
+    fills: null,
+    stroke: [],
+    strokes: null,
+    effect: [],
+    text: [],
+    height: [],
+    radius: [],
+    padding: [],
+    defaultVariant: [],
+    type:[]
+  };// 노드 정보
+  if ('children' in node) {
+    node.children.forEach((childNode: any) => {
+      //스타일 노드
+      const styleNodes = getStyledNode(childNode);
+      //노드 스타일 정보
+      if (node.name) {
+        nodeinfo.name = node.parent.type !== 'PAGE'? node.parent.type !== 'FRAME'? getInArray(nodeinfo.name,node.name):getInArray(nodeinfo.name,node.parent.name): getInArray(nodeinfo.name,node.name)
+      }
+      if (styleNodes.fill) {
+        nodeinfo.fill = setStyleNameToNodeStyles(styleNodes.fill.fillStyleId, nodeinfo.fill);
+      }
+      if (styleNodes.stroke) {
+        nodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, nodeinfo.stroke);
+      }
+      if (styleNodes.fills) {
+        nodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
+      }
+      if (styleNodes.strokes) {
+        nodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
+      }
+      if (styleNodes.effect) {
+        nodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, nodeinfo.effect);
+      }
+      if (styleNodes.text) {
+        nodeinfo.text = setStyleNameToNodeStyles(styleNodes.text.textStyleId, nodeinfo.text);
+      }
+      if (childNode.height) {
+        nodeinfo.height = getInArray(nodeinfo.height,childNode.height);
+      }
+      if (styleNodes.radius) {
+        nodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
+      }
+      if (styleNodes.padding) {
+        nodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
+      }
+      if (node.defaultVariant) {
+        nodeinfo.defaultVariant = node.defaultVariant.name
+      }
+      if (node.type) {
+        nodeinfo.type = node.type
+      }
+    });
+  }
+  return nodeinfo;
+}
+let nodesinfos: PageNodeInfo[] = []; // 배열로 초기화
 // 각 페이지의 노드 정보
 function getNodeInfo() {
   if (nodesinfos.length > 0) return;
-  const removedPage = getremovePage();
+  const removedPage = getRemovePage();
   removedPage.forEach((page: any) => {
-    //필터된 노드
-    const removedNode = page.children.filter((node: any) => isIncludedNode(node));
     const nodesinfo: PageNodeInfo = {
-      pageName: page.name,
+      pageName: undefined,
+      nodeCount: undefined,
       nodes: [],
     };
-    type Node = {
-      type: string;
-      name: string;
-      children?: Node[];
-    };
-
-  let newNodesList: Node[] = [];
-  removedNode.forEach((node: any) => {
-    if(node.type === "FRAME"){
-      if(node.name.includes("🚫")){
-          if (node.children) {
-             console.log(node.children)
-              newNodesList = [...newNodesList, ...node.children];
-          }}
-      else{return}
-    }else{
-        newNodesList = [...newNodesList, node];
-    }})
-    newNodesList.forEach((node: any) => {
-      const nodeInfo = {
-        name: node.name,
-        fill: [],
-        stroke: [],
-        effect: [],
-        font: [],
-        defaultVariant: node.defaultVariant ? node.defaultVariant.name : null,
-      };
-      if ('children' in node) {
-        
-        node.children.forEach((childNode: any) => {
-          //스타일 노드
-          const styleNodes = getStyledNode(childNode);
-          // console.log("styleNodes",styleNodes)
-          //노드 스타일 정보
-          if (styleNodes.fill) {
-            nodeInfo.fill = setStyleNameToNodeStyles(styleNodes.fill.fillStyleId, nodeInfo.fill);
-          }
-          if (styleNodes.stroke) {
-            nodeInfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, nodeInfo.stroke);
-          }
-          if (styleNodes.effect) {
-            nodeInfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, nodeInfo.effect);
-          }
-          if (styleNodes.font) {
-            nodeInfo.font = setStyleNameToNodeStyles(styleNodes.font.textStyleId, nodeInfo.font);
-          }
-        });
-        nodesinfo.nodes = [...nodesinfo.nodes, nodeInfo];
+    
+    nodesinfo.pageName = page.name
+    //필터된 노드
+    page.children.filter((node: any) => isIncludedNode(node)).forEach((node) => {
+      let newNodesList: Node[] = [];
+      if(node.type === "SECTION" && node.name.includes("🚫")) {
+        if (node.children) {
+          newNodesList = [...newNodesList, ...node.children]; // 자식 노드 추가
+        }
+      } else {
+        newNodesList = [...newNodesList, node]; // 노드 자체 추가
       }
+      newNodesList.forEach((node: any) => {
+        let nodeinfo = setNodeInfo(node)
+        nodesinfo.nodes = [...nodesinfo.nodes,nodeinfo];
+      });          
     });
-    nodesinfos = [...nodesinfos, nodesinfo];
+     nodesinfo.nodeCount = nodesinfo.nodes.length
+     nodesinfos = [...nodesinfos,nodesinfo];   
   });
 }
+
+let selectedNodeinfos: any[] = []; // 배열로 초기화
 function getSelectedNodeInfo(selectedNodes: any) {
+  selectedNodeinfos = [];
+  let selectedNodeinfo = [];
   selectedNodes.forEach((selectedNode)=>{
-    setNodeInfo(selectedNode, selectedNodeinfo)
-    selectedNodeinfos = [...selectedNodeinfos,selectedNodeinfo];
-    return selectedNodeinfos;
+    let nodeinfo = setNodeInfo(selectedNode)
+    selectedNodeinfo = [...selectedNodeinfo,nodeinfo];
   })
+  selectedNodeinfos = [selectedNodeinfo]
 }
 
 
 
-figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
+figma.showUI(__html__, { width: 900, height: 600, title: 'Asset Filter' });
 
 figma.ui.onmessage = (message) => {
   if (message.type === 'open-external-link') {
@@ -308,8 +277,8 @@ figma.ui.onmessage = (message) => {
     nodeName: nodeNames,
   });
   if (message.type === 'request_selected') {
-    selectedNodeinfos = [];
-    if (figma.currentPage.selection) {
+    
+    if (figma.currentPage.selection.length > 0) {
       getSelectedNodeInfo(figma.currentPage.selection);
     }
   }

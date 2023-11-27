@@ -71,6 +71,7 @@ const selectedContentRef = useRef<HTMLPreElement | null>(null);
 
 
   function handleGetInfo () {
+    setNodeSelected(null)
     window.parent.postMessage({ pluginMessage: { type: 'request_selected' } }, '*');
   }
   return (

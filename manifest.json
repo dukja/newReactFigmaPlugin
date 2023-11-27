@@ -1,6 +1,6 @@
 {
-  "name": "CDS Filter",
-  "id": "1282716594765553248",
+  "name": "Filter",
+  "id": "",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
