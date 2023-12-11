@@ -70,7 +70,6 @@ function getStyledNode(node: any): any {
   if ('children' in node) {
     for (let child of node.children) {
       let styledChild = getStyledNode(child);
-       console.log('styledChild',styledChild)
       if (styledChild.fillStyleId && !styles.fill) {
         styles.fill = styledChild;
       }
@@ -89,8 +88,15 @@ function getStyledNode(node: any): any {
       if (styledChild.text && !styles.text) {
         styles.text = styledChild.text;
       }
-      if (styles.radius === undefined && styledChild.topLeftRadius || styledChild.topRightRadius || styledChild.bottomLeftRadius || styledChild.bottomRightRadius) {
-        styles.radius = styledChild;
+      let radiusValues = [
+        styledChild.topLeftRadius,
+        styledChild.topRightRadius,
+        styledChild.bottomRightRadius,
+        styledChild.bottomLeftRadius
+      ].filter(r => r !== undefined);
+    
+      if (radiusValues.length > 0) {
+        styles.radius = radiusValues;
       }
       if (styles.padding === undefined && styledChild.paddingBottom || styledChild.paddingLeft || styledChild.paddingRight || styledChild.paddingTop) {
         styles.padding = styledChild;
@@ -171,7 +177,6 @@ function setNodeInfo(node: any): NodeStyle{
       //스타일 노드
       let styleNodes;
       styleNodes = getStyledNode(childNode);
-      console.log('styleNodes1',styleNodes)
       //노드 스타일 정보
       if (node.name) {
         nodeinfo.name = node.parent.type !== 'PAGE'? node.parent.type !== 'FRAME'? getInArray(nodeinfo.name,node.name):getInArray(nodeinfo.name,node.parent.name): getInArray(nodeinfo.name,node.name)
@@ -198,7 +203,7 @@ function setNodeInfo(node: any): NodeStyle{
         nodeinfo.height = getInArray(nodeinfo.height,childNode.height);
       }
       if (styleNodes.radius) {
-        nodeinfo.radius = styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius;
+        nodeinfo.radius = styleNodes.radius;
       }
       if (styleNodes.padding) {
         nodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
@@ -227,7 +232,7 @@ function getNodeInfo() {
     
     nodesinfo.pageName = page.name
     //필터된 노드
-    page.children.filter((node: any) => isIncludedNode(node)).forEach((node) => {
+    page.children.filter((node) => isIncludedNode(node)).forEach((node) => {
       let newNodesList: Node[] = [];
       if(node.type === "SECTION" && node.name.includes("🚫Don't Use")) {
         if (node.children) {
@@ -237,9 +242,10 @@ function getNodeInfo() {
         newNodesList = [...newNodesList, node]; // 노드 자체 추가
       }
       newNodesList.forEach((node: any) => {
-        let nodeinfo = setNodeInfo(node)
-        console.log(node)
-        nodesinfo.nodes = [...nodesinfo.nodes,nodeinfo];
+        node.children.forEach((child)=>{
+          let nodeinfo = setNodeInfo(child)
+          nodesinfo.nodes = [...nodesinfo.nodes,nodeinfo];
+        })
       });          
     });
      nodesinfo.nodeCount = nodesinfo.nodes.length
