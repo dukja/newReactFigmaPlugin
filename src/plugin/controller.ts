@@ -64,8 +64,14 @@ function getStyledNode(node: any): any {
   if (radiusValues.length > 0) {
     styles.radius = radiusValues;
   }
-  if (node.paddingBottom || node.paddingLeft || node.paddingRight || node.paddingTop) {
-    styles.padding = node;
+  let paddingValues = [
+    node.paddingTop,
+    node.paddingRight,
+    node.paddingBottom,
+    node.paddingLeft
+  ].filter(r => r !== undefined);
+  if (paddingValues.length > 0) {
+    styles.padding = paddingValues;
   }
   if ('children' in node) {
     for (let child of node.children) {
@@ -98,8 +104,14 @@ function getStyledNode(node: any): any {
       if (radiusValues.length > 0) {
         styles.radius = radiusValues;
       }
-      if (styles.padding === undefined && styledChild.paddingBottom || styledChild.paddingLeft || styledChild.paddingRight || styledChild.paddingTop) {
-        styles.padding = styledChild;
+      let paddingValues = [
+        styledChild.paddingTop,
+        styledChild.paddingRight,
+        styledChild.paddingBottom,
+        styledChild.paddingLeft
+      ].filter(r => r !== undefined);
+      if (paddingValues.length > 0) {
+        styles.padding = paddingValues;
       }
     }
   }
@@ -206,7 +218,7 @@ function setNodeInfo(node: any): NodeStyle{
         nodeinfo.radius = styleNodes.radius;
       }
       if (styleNodes.padding) {
-        nodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
+        nodeinfo.padding = styleNodes.padding;
       }
       if (node.defaultVariant) {
         nodeinfo.defaultVariant = node.defaultVariant.name
