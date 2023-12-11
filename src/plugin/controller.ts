@@ -39,13 +39,13 @@ function getStyledNode(node: any): any {
   if (node.fillStyleId) {
     styles.fill = node;
   }
-  if (node.fills && node.fills && node.fills[0] && node.fills[0].boundVariables && node.fills[0].boundVariables['color'] && node.fills[0].boundVariables['color'].id!== undefined) {
+  if (node.fills && node.fills[0] && node.fills[0].boundVariables && node.fills[0].boundVariables['color'] && node.fills[0].boundVariables['color'].id!== undefined) {
     styles.fills = node;
   }
   if (node.strokeStyleId) {
     styles.stroke = node;
   }
-  if (node.strokes && node.strokes && node.strokes[0] && node.strokes[0].boundVariables && node.strokes[0].boundVariables['color'] && node.strokes[0].boundVariables['color'].id ) {
+  if (node.strokes && node.strokes[0] && node.strokes[0].boundVariables && node.strokes[0].boundVariables['color'] && node.strokes[0].boundVariables['color'].id ) {
     styles.strokes = node;
   }
   if (node.effectStyleId) {
@@ -54,8 +54,15 @@ function getStyledNode(node: any): any {
   if ('textStyleId' in node) { 
     styles.text = node;
   }  
-  if (node.topLeftRadius || node.topRightRadius || node.bottomLeftRadius || node.bottomRightRadius) {
-    styles.radius = node;
+  let radiusValues = [
+    node.topLeftRadius,
+    node.topRightRadius,
+    node.bottomRightRadius,
+    node.bottomLeftRadius
+  ].filter(r => r !== undefined);
+
+  if (radiusValues.length > 0) {
+    styles.radius = radiusValues;
   }
   if (node.paddingBottom || node.paddingLeft || node.paddingRight || node.paddingTop) {
     styles.padding = node;
@@ -63,8 +70,9 @@ function getStyledNode(node: any): any {
   if ('children' in node) {
     for (let child of node.children) {
       let styledChild = getStyledNode(child);
-      if (styledChild.fill && !styles.fill) {
-        styles.fill = styledChild.fill;
+       console.log('styledChild',styledChild)
+      if (styledChild.fillStyleId && !styles.fill) {
+        styles.fill = styledChild;
       }
       if(styles.fills === undefined && styledChild.fills && styledChild.fills[0] && styledChild.fills[0].boundVariables && styledChild.fills[0].boundVariables['color'] && styledChild.fills[0].boundVariables['color'].id!== undefined) {
         styles.fills = styledChild;
@@ -95,13 +103,10 @@ function getStyledNode(node: any): any {
 
 // 스타일 이름
 function getStyleName(styleId: any) {
-  if (typeof styleId === 'string') {
+
     const style = figma.getStyleById(styleId);
     return style ? style.name : null;
-  } else {
-    // 유효하지 않은 styleId 처리 (예: 심볼 타입인 경우)
-    return null; // 또는 에러 처리
-  }
+
 }
 
 function getInArray(array, item) {
@@ -134,7 +139,7 @@ type NodeStyle = {
   effect: string[]| null;
   text: string[]| null;
   height: string[]| null;
-  radius: string[]| null;
+  radius: number[]| null;
   padding: string[]| null;
   defaultVariant: string[] | null;
   type: string[] | null;
@@ -164,7 +169,9 @@ function setNodeInfo(node: any): NodeStyle{
   if ('children' in node) {
     node.children.forEach((childNode: any) => {
       //스타일 노드
-      const styleNodes = getStyledNode(childNode);
+      let styleNodes;
+      styleNodes = getStyledNode(childNode);
+      console.log('styleNodes1',styleNodes)
       //노드 스타일 정보
       if (node.name) {
         nodeinfo.name = node.parent.type !== 'PAGE'? node.parent.type !== 'FRAME'? getInArray(nodeinfo.name,node.name):getInArray(nodeinfo.name,node.parent.name): getInArray(nodeinfo.name,node.name)
@@ -191,7 +198,7 @@ function setNodeInfo(node: any): NodeStyle{
         nodeinfo.height = getInArray(nodeinfo.height,childNode.height);
       }
       if (styleNodes.radius) {
-        nodeinfo.radius = [styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius];
+        nodeinfo.radius = styleNodes.radius.topLeftRadius,styleNodes.radius.topRightRadius,styleNodes.radius.bottomRightRadius,styleNodes.radius.bottomLeftRadius;
       }
       if (styleNodes.padding) {
         nodeinfo.padding = [styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft];
@@ -222,7 +229,7 @@ function getNodeInfo() {
     //필터된 노드
     page.children.filter((node: any) => isIncludedNode(node)).forEach((node) => {
       let newNodesList: Node[] = [];
-      if(node.type === "SECTION" && node.name.includes("🚫")) {
+      if(node.type === "SECTION" && node.name.includes("🚫Don't Use")) {
         if (node.children) {
           newNodesList = [...newNodesList, ...node.children]; // 자식 노드 추가
         }
@@ -231,11 +238,13 @@ function getNodeInfo() {
       }
       newNodesList.forEach((node: any) => {
         let nodeinfo = setNodeInfo(node)
+        console.log(node)
         nodesinfo.nodes = [...nodesinfo.nodes,nodeinfo];
       });          
     });
      nodesinfo.nodeCount = nodesinfo.nodes.length
      nodesinfos = [...nodesinfos,nodesinfo];   
+     
   });
 }
 
