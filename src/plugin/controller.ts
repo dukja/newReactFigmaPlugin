@@ -56,7 +56,7 @@ function getStyledNode(node: any): any {
     styles.text = node;
   }  
   if (node.height) { 
-    styles.height = node.height;
+    styles.height = node;
   }  
   let radiusValues = [
     node.topLeftRadius,
@@ -91,14 +91,14 @@ function getStyledNode(node: any): any {
       if (!styles.strokes && styledChild.strokes && styledChild.strokes[0] && styledChild.strokes[0].boundVariables && styledChild.strokes[0].boundVariables['color'] && styledChild.strokes[0].boundVariables['color'].id) {
         styles.strokes = styledChild;
       }
-      if (styledChild.effect && !styles.effect) {
-        styles.effect = styledChild.effect;
+      if (styledChild.effectStyleId && !styles.effect) {
+        styles.effect = styledChild;
       }
       if (styledChild.text && !styles.text) {
         styles.text = styledChild.text;
       }
       if (styledChild.height && !styles.height) { 
-        styles.height = styledChild.height;
+        styles.height = styledChild;
       }  
       let radiusValues = [
         styledChild.topLeftRadius,
@@ -189,7 +189,7 @@ function setNodeInfo(node: any): NodeStyle{
       styleNodes = getStyledNode(childNode);
       //노드 스타일 정보
       if (node.name) {
-        nodeinfo.name = node.parent.type !== 'PAGE'? node.parent.type !== 'FRAME'? getInArray(nodeinfo.name,node.name):getInArray(nodeinfo.name,node.parent.name): getInArray(nodeinfo.name,node.name)
+        nodeinfo.name = node.parent.type !== 'PAGE'? getInArray(nodeinfo.name,node.parent.name):getInArray(nodeinfo.name,node.name);
       }
       if (styleNodes.fill) {
         nodeinfo.fill = setStyleNameToNodeStyles(styleNodes.fill.fillStyleId, nodeinfo.fill);
@@ -210,7 +210,7 @@ function setNodeInfo(node: any): NodeStyle{
         nodeinfo.text = setStyleNameToNodeStyles(styleNodes.text.textStyleId, nodeinfo.text);
       }
       if (styleNodes.height) {
-        nodeinfo.height = getInArray(nodeinfo.height,styleNodes.height);
+        nodeinfo.height = getInArray(nodeinfo.height,styleNodes.height.height);
       }
       if (styleNodes.radius) {
         nodeinfo.radius = styleNodes.radius;
@@ -232,8 +232,8 @@ let nodesinfos: PageNodeInfo[] = []; // 배열로 초기화
 // 각 페이지의 노드 정보
 function getNodeInfo() {
   if (nodesinfos.length > 0) return;
-  const removedPage = getPageNodes();
-  removedPage.forEach((page: any) => {
+  const isPage = getPageNodes();
+  isPage.forEach((page: any) => {
     const nodesinfo: PageNodeInfo = {
       pageName: undefined,
       nodeCount: undefined,
