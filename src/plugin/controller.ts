@@ -1,27 +1,27 @@
 // 제외 페이지명
-const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading','📌CDS가 처음이신가요?'];
+const exPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading','📌CDS가 처음이신가요?'];
 // 포함 노드 타입
-const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','SECTION'];
+const nodeTypes = ['COMPONENT_SET', 'COMPONENT', 'INSTANCE','SECTION'];
 // 제외 노드명
-const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
+const exNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
 // 필터된 페이지
-let removePage: any = null;
-function getRemovePage() {
-  if (removePage === null) {
-    removePage = figma.root.children.filter((page) => !isExcludedPage(page));
+let pageNodes: any = null;
+function getPageNodes() {
+  if (pageNodes === null) {
+    pageNodes = figma.root.children.filter((page) => !isExPage(page));
   }
-  return removePage;
+  return pageNodes;
 }
 
 // 제외 페이지
-function isExcludedPage(node: any) {
-  return node.type === 'PAGE' && node.name && excludedPageNames.some((name) => node.name?.includes(name));
+function isExPage(node: any) {
+  return node.type === 'PAGE' && exPageNames.some((name) => node.name?.includes(name));
 }
 // 포함 노드
-function isIncludedNode(node: any) {
+function isNode(node: any) {
   return (
-    includedNodeTypes.some((type) => node.type.includes(type)) &&
-    node.name && !excludedNodeNames.some((name) => node.name?.includes(name))
+    nodeTypes.some((type) => node.type?.includes(type)) &&
+    !exNodeNames.some((name) => node.name?.includes(name))
   );
 }
 // 스타일 노드
@@ -33,6 +33,7 @@ function getStyledNode(node: any): any {
     strokes: undefined,
     effect: undefined,
     text: undefined,
+    height: undefined,
     radius: undefined,
     padding: undefined,
   };
@@ -54,15 +55,17 @@ function getStyledNode(node: any): any {
   if ('textStyleId' in node) { 
     styles.text = node;
   }  
+  if (node.height) { 
+    styles.height = node.height;
+  }  
   let radiusValues = [
     node.topLeftRadius,
     node.topRightRadius,
     node.bottomRightRadius,
     node.bottomLeftRadius
   ].filter(r => r !== undefined);
-
   if (radiusValues.length > 0) {
-    styles.radius = radiusValues;
+    styles.radius = [...new Set(radiusValues)];
   }
   let paddingValues = [
     node.paddingTop,
@@ -71,7 +74,7 @@ function getStyledNode(node: any): any {
     node.paddingLeft
   ].filter(r => r !== undefined);
   if (paddingValues.length > 0) {
-    styles.padding = paddingValues;
+    styles.padding = [...new Set(paddingValues)];;
   }
   if ('children' in node) {
     for (let child of node.children) {
@@ -79,13 +82,13 @@ function getStyledNode(node: any): any {
       if (styledChild.fillStyleId && !styles.fill) {
         styles.fill = styledChild;
       }
-      if(styles.fills === undefined && styledChild.fills && styledChild.fills[0] && styledChild.fills[0].boundVariables && styledChild.fills[0].boundVariables['color'] && styledChild.fills[0].boundVariables['color'].id!== undefined) {
+      if(!styles.fills && styledChild.fills && styledChild.fills[0] && styledChild.fills[0].boundVariables && styledChild.fills[0].boundVariables['color'] && styledChild.fills[0].boundVariables['color'].id) {
         styles.fills = styledChild;
       }
-      if (styledChild.stroke && !styles.stroke) {
-        styles.stroke = styledChild.stroke;
+      if (styledChild.strokeStyleId && !styles.stroke) {
+        styles.stroke = styledChild;
       }
-      if (styles.strokes === undefined && styledChild.strokes && styledChild.strokes[0] && styledChild.strokes[0].boundVariables && styledChild.strokes[0].boundVariables['color'] && styledChild.strokes[0].boundVariables['color'].id !== undefined) {
+      if (!styles.strokes && styledChild.strokes && styledChild.strokes[0] && styledChild.strokes[0].boundVariables && styledChild.strokes[0].boundVariables['color'] && styledChild.strokes[0].boundVariables['color'].id) {
         styles.strokes = styledChild;
       }
       if (styledChild.effect && !styles.effect) {
@@ -94,15 +97,17 @@ function getStyledNode(node: any): any {
       if (styledChild.text && !styles.text) {
         styles.text = styledChild.text;
       }
+      if (styledChild.height && !styles.height) { 
+        styles.height = styledChild.height;
+      }  
       let radiusValues = [
         styledChild.topLeftRadius,
         styledChild.topRightRadius,
         styledChild.bottomRightRadius,
         styledChild.bottomLeftRadius
       ].filter(r => r !== undefined);
-    
       if (radiusValues.length > 0) {
-        styles.radius = radiusValues;
+        styles.radius = [...new Set(radiusValues)];
       }
       let paddingValues = [
         styledChild.paddingTop,
@@ -111,7 +116,7 @@ function getStyledNode(node: any): any {
         styledChild.paddingLeft
       ].filter(r => r !== undefined);
       if (paddingValues.length > 0) {
-        styles.padding = paddingValues;
+        styles.padding = [...new Set(paddingValues)];
       }
     }
   }
@@ -121,43 +126,36 @@ function getStyledNode(node: any): any {
 
 // 스타일 이름
 function getStyleName(styleId: any) {
-
     const style = figma.getStyleById(styleId);
     return style ? style.name : null;
-
 }
 
 function getInArray(array, item) {
-  // array가 undefined거나 null일 경우 빈 배열로 초기화
-  if (!array) {
-    return [item]
-  }
-  // array에 item이 포함되어 있지 않다면 추가
   if (Array.isArray(array)&& !array.includes(item)) {
-    array.push(item);
+    array=[...array,item];
   }
   return array;
 }
-// 스타일 이름 추가 함수
+
 const setStyleNameToNodeStyles = (styleId, targetArray) => {
-  // 노드 스타일 이름
   const styleName = getStyleName(styleId);
   let setArray
   if (styleName) {
-     setArray = getInArray(targetArray,styleName); // 새로운 스타일 이름 추가 (중복은 제거됨)
+     setArray = getInArray(targetArray,styleName); 
   }
-  return setArray; // 중복되는 스타일 이름이 있으면 그냥 현재 배열을 반환
+  return setArray;
 };
+
 type NodeStyle = {
   name: string[]| null;
   fill: string[]| null;
-  fills: string | null;
+  fills: string[] | null;
   stroke: string[]| null;
-  strokes: string | null;
+  strokes: string[] | null;
   effect: string[]| null;
   text: string[]| null;
   height: string[]| null;
-  radius: number[]| null;
+  radius: string[]| null;
   padding: string[]| null;
   defaultVariant: string[] | null;
   type: string[] | null;
@@ -173,9 +171,9 @@ function setNodeInfo(node: any): NodeStyle{
   let nodeinfo: NodeStyle = {
     name: [],
     fill: [],
-    fills: null,
+    fills: [],
     stroke: [],
-    strokes: null,
+    strokes: [],
     effect: [],
     text: [],
     height: [],
@@ -200,10 +198,10 @@ function setNodeInfo(node: any): NodeStyle{
         nodeinfo.stroke = setStyleNameToNodeStyles(styleNodes.stroke.strokeStyleId, nodeinfo.stroke);
       }
       if (styleNodes.fills) {
-        nodeinfo.fills = figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name;
+        nodeinfo.fills =  getInArray(nodeinfo.fills,figma.variables.getVariableById(styleNodes.fills.fills[0].boundVariables['color'].id).name);
       }
       if (styleNodes.strokes) {
-        nodeinfo.strokes = figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name;
+        nodeinfo.strokes = getInArray(nodeinfo.strokes, figma.variables.getVariableById(styleNodes.strokes.strokes[0].boundVariables['color'].id).name) ;
       }
       if (styleNodes.effect) {
         nodeinfo.effect = setStyleNameToNodeStyles(styleNodes.effect.effectStyleId, nodeinfo.effect);
@@ -211,8 +209,8 @@ function setNodeInfo(node: any): NodeStyle{
       if (styleNodes.text) {
         nodeinfo.text = setStyleNameToNodeStyles(styleNodes.text.textStyleId, nodeinfo.text);
       }
-      if (childNode.height) {
-        nodeinfo.height = getInArray(nodeinfo.height,childNode.height);
+      if (styleNodes.height) {
+        nodeinfo.height = getInArray(nodeinfo.height,styleNodes.height);
       }
       if (styleNodes.radius) {
         nodeinfo.radius = styleNodes.radius;
@@ -234,7 +232,7 @@ let nodesinfos: PageNodeInfo[] = []; // 배열로 초기화
 // 각 페이지의 노드 정보
 function getNodeInfo() {
   if (nodesinfos.length > 0) return;
-  const removedPage = getRemovePage();
+  const removedPage = getPageNodes();
   removedPage.forEach((page: any) => {
     const nodesinfo: PageNodeInfo = {
       pageName: undefined,
@@ -244,7 +242,7 @@ function getNodeInfo() {
     
     nodesinfo.pageName = page.name
     //필터된 노드
-    page.children.filter((node) => isIncludedNode(node)).forEach((node) => {
+    page.children.filter((node) => isNode(node)).forEach((node) => {
       let newNodesList: Node[] = [];
       if(node.type === "SECTION" && node.name.includes("🚫Don't Use")) {
         if (node.children) {
@@ -254,10 +252,49 @@ function getNodeInfo() {
         newNodesList = [...newNodesList, node]; // 노드 자체 추가
       }
       newNodesList.forEach((node: any) => {
+        let combinedNodeInfo = {
+          name: [],
+          fill: [],
+          fills: [],
+          stroke: [],
+          strokes: [],
+          effect: [],
+          text: [],
+          height: [],
+          radius: [],
+          padding: [],
+          defaultVariant: [],
+          type:[]
+          // 기타 필요한 속성들 초기화
+        };
         node.children.forEach((child)=>{
           let nodeinfo = setNodeInfo(child)
-          nodesinfo.nodes = [...nodesinfo.nodes,nodeinfo];
+          combinedNodeInfo.name = [...combinedNodeInfo.name, (nodeinfo.name || [])];
+          combinedNodeInfo.fill = [...combinedNodeInfo.fill,(nodeinfo.fill || [])];
+          combinedNodeInfo.fills = [...combinedNodeInfo.fills, (nodeinfo.fills || [])];
+          combinedNodeInfo.stroke = [...combinedNodeInfo.stroke, (nodeinfo.stroke ||[])];
+          combinedNodeInfo.strokes = [...combinedNodeInfo.strokes, (nodeinfo.strokes|| [])];
+          combinedNodeInfo.effect = [...combinedNodeInfo.effect, (nodeinfo.effect ||[])];
+          combinedNodeInfo.text = [...combinedNodeInfo.text, (nodeinfo.text || [])];
+          combinedNodeInfo.height = [...combinedNodeInfo.height, (nodeinfo.height || [])];
+          combinedNodeInfo.radius = [...combinedNodeInfo.radius, (nodeinfo.radius || [])];
+          combinedNodeInfo.padding = [...combinedNodeInfo.padding, (nodeinfo.padding || [])];
+          combinedNodeInfo.defaultVariant = [...combinedNodeInfo.defaultVariant, (nodeinfo.defaultVariant || [])];
+          combinedNodeInfo.type = [...combinedNodeInfo.type, (nodeinfo.type || [])];
         })
+        combinedNodeInfo.name = [...new Set(combinedNodeInfo.name.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.fill = [...new Set(combinedNodeInfo.fill.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.fills = [...new Set(combinedNodeInfo.fills.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.stroke = [...new Set(combinedNodeInfo.stroke.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.strokes = [...new Set(combinedNodeInfo.strokes.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.effect = [...new Set(combinedNodeInfo.effect.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.text = [...new Set(combinedNodeInfo.text.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.height = [...new Set(combinedNodeInfo.height.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.radius = [...new Set(combinedNodeInfo.radius.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.padding = [...new Set(combinedNodeInfo.padding.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.defaultVariant = [...new Set(combinedNodeInfo.defaultVariant.flatMap(x => x).filter(x => x.length > 0))];
+        combinedNodeInfo.type = [...new Set(combinedNodeInfo.type.flatMap(x => x).filter(x => x.length > 0))];
+        nodesinfo.nodes = [...nodesinfo.nodes, combinedNodeInfo];
       });          
     });
      nodesinfo.nodeCount = nodesinfo.nodes.length
@@ -276,8 +313,6 @@ function getSelectedNodeInfo(selectedNodes: any) {
   })
   selectedNodeinfos = [selectedNodeinfo]
 }
-
-
 
 figma.showUI(__html__, { width: 900, height: 600, title: 'Asset Filter' });
 
