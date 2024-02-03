@@ -1,6 +1,6 @@
 {
-  "name": "CDS Filter",
-  "id": "1282716594765553248",
+  "name": "Asset Filter",
+  "id": "1335676149535460294",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
