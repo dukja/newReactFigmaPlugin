@@ -1,4 +1,4 @@
-const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '제작중', 'Heading'];
+const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '(작업중)','(검토중)','Heading', '📌'];
 // 포함 노드 타입
 // 제외 페이지명
 const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT','SECTION'];
@@ -39,13 +39,13 @@ function getStyledNode(node: any): any {
   if (node.fillStyleId) {
     styles.fill = node;
   }
-  if (node?.fills[0]?.boundVariables['color']?.id) {
+  if (node?.fills?.[0]?.boundVariables?.['color']?.id) {
     styles.fills = node;
   }
   if (node.strokeStyleId) {
     styles.stroke = node;
   }
-  if (node?.strokes[0]?.boundVariables['color']?.id ) {
+  if (node?.strokes?.[0]?.boundVariables?.['color']?.id ) {
     styles.strokes = node;
   }
   if (node.effectStyleId) {
@@ -94,8 +94,18 @@ function getArray(array, item) {
   return array;
 }
 // 스타일 이름
-function getStyleName(styleId: any) {
-  return figma.getStyleById(styleId)?.name;
+function getStyleName(styleId: string): string | undefined {
+  // styleId가 문자열인지 확인하고, 빈 문자열이 아닌지도 체크합니다.
+  if (typeof styleId === 'string' && styleId.trim() !== '') {
+    // figma.getStyleById를 호출하여 스타일 객체를 가져옵니다.
+    // 옵셔널 체이닝을 사용하여 name 속성이 존재하는 경우에만 접근합니다.
+    const style = figma.getStyleById(styleId);
+    return style?.name;
+  } else {
+    // styleId가 유효하지 않은 경우, 콘솔에 경고를 출력하거나 undefined를 반환할 수 있습니다.
+    console.warn('Invalid styleId:', styleId);
+    return undefined;
+  }
 }
 
 
@@ -120,6 +130,7 @@ const selectedNodeinfo = {
   nodeType: []
 };
 function setNodeInfo(nodes,info){
+    if(Array.isArray(nodes.children)){
       nodes.children.forEach((childNode: any) => {
         //스타일 노드
         const styleNodes = getStyledNode(childNode);
@@ -131,13 +142,13 @@ function setNodeInfo(nodes,info){
           info.fill = getArray(info.fill,getStyleName(styleNodes.fill.fillStyleId));
         }
         if (styleNodes.fills) {
-          info.fills = getArray(info.fills,figma.variables.getVariableById(styleNodes.fills.fills[0]?.boundVariables?.['color'].id)?.name) ;
+          info.fills = getArray(info.fills,figma.variables.getVariableById(styleNodes.fills.fills?.[0]?.boundVariables?.['color'].id)?.name) ;
         }
         if (styleNodes.stroke) {
           info.stroke = getArray(info.stroke,getStyleName(styleNodes.stroke.strokeStyleId));
         }
         if (styleNodes.strokes) {
-          info.strokes = getArray(info.strokes,figma.variables.getVariableById(styleNodes.strokes.strokes[0]?.boundVariables?.['color'].id)?.name);
+          info.strokes = getArray(info.strokes,figma.variables.getVariableById(styleNodes.strokes.strokes?.[0]?.boundVariables?.['color'].id)?.name);
         }
         if (styleNodes.effect) {
           info.effect = getArray(info.effect,getStyleName(styleNodes.effect.effectStyleId));
@@ -159,60 +170,59 @@ function setNodeInfo(nodes,info){
         }
         info.defaultVariant = nodes.defaultVariant;
         info.nodeType = nodes.parent.type ===  'COMPONENT_SET' || nodes.type;
-      });
-
+    });}
 }
 // 각 페이지의 노드 정보
 function getNodeInfo() {
   if (nodesinfos.length>0) return;
   const isPages = getPages();
-  isPages.forEach((page: any) => {
-    //필터된 노드
-    const isNodes = page.children.filter((node: any) => getNodes(node));
-    const nodesinfo:any = {
-      pageName: page.name,
-      pageCount: page.length,
-      nodes:[],
-    };
-    let newNodesWrap: Node[] = [];
-    isNodes.forEach((nodes: any) => {
-      if(nodes.type === "SECTION" && nodes.name.includes("🚫") && nodes.children){
-        newNodesWrap = [...newNodesWrap, ...nodes.children];
-      }else{
-        newNodesWrap = [...newNodesWrap, nodes];
-      }
-    })
-
-    newNodesWrap.forEach((nodes: any) => {
-      const nodeInfo = {
-        name: [],
-        fill: [],
-        fills: [],
-        stroke: [],
-        strokes: [],
-        effect: [],
-        text: [],
-        textStyle: [],
-        height: [],
-        radius: [],
-        padding: [],
-        defaultVariant: [],
-        nodeType: []
+    isPages.forEach((page: any) => {
+      //필터된 노드
+      const isNodes = page.children.filter((node: any) => getNodes(node));
+      const nodesinfo:any = {
+        pageName: page.name,
+        pageCount: page.length,
+        nodes:[],
       };
+      let newNodesWrap: Node[] = [];
+      isNodes.forEach((nodes: any) => {
+        if(nodes.type === "SECTION" && nodes.name.includes("🚫") && nodes.children){
+          newNodesWrap = [...newNodesWrap, ...nodes.children];
+        }else{
+          newNodesWrap = [...newNodesWrap, nodes];
+        }
+      })
 
-      if((nodes.type !=='COMPONENT_SET')){
-        setNodeInfo(nodes, nodeInfo)
-      }
-      if ('children' in nodes) {
-        nodes.children.forEach((childNode: any) => {
-          setNodeInfo(childNode, nodeInfo)
-        });
-      }
-      nodesinfo.nodes = [...nodesinfo.nodes, nodeInfo];
+      newNodesWrap.forEach((nodes: any) => {
+        const nodeInfo = {
+          name: [],
+          fill: [],
+          fills: [],
+          stroke: [],
+          strokes: [],
+          effect: [],
+          text: [],
+          textStyle: [],
+          height: [],
+          radius: [],
+          padding: [],
+          defaultVariant: [],
+          nodeType: []
+        };
 
+        if((nodes.type !=='COMPONENT_SET')){
+          setNodeInfo(nodes, nodeInfo)
+        }
+        if ('children' in nodes) {
+          nodes.children.forEach((childNode: any) => {
+            setNodeInfo(childNode, nodeInfo)
+          });
+        }
+        nodesinfo.nodes = [...nodesinfo.nodes, nodeInfo];
+
+      });
+      nodesinfos = [...nodesinfos, nodesinfo];
     });
-    nodesinfos = [...nodesinfos, nodesinfo];
-  });
 }
 function getSelectedNodeInfo(selectedNodes: any) {
   selectedNodes.forEach((selectedNode)=>{
