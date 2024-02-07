@@ -1,28 +1,21 @@
-const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '(작업중)','(검토중)','Heading', '📌'];
-// 포함 노드 타입
 // 제외 페이지명
+const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '(작업중)','(검토중)','Heading', '📌'];
+// 포함 노드타입
 const includedNodeTypes = ['COMPONENT_SET', 'COMPONENT','SECTION'];
 // 제외 노드명
 const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 'Guide', 'guide'];
-// 필터된 페이지
-let isPageNodes: any = null;
+
 function getPages() {
-  if (isPageNodes) return;
-  return isPageNodes = figma.root.children.filter((page) => !isExcludedPage(page));
+  return figma.root.children.filter((node) => node.type === 'PAGE' && !excludedPageNames.some((name) => node.name?.includes(name)));
 }
 
-// 제외 페이지
-function isExcludedPage(node: any) {
-  return node.type === 'PAGE' && node.name && excludedPageNames.some((name) => node.name?.includes(name));
-}
-// 포함 노드
+
 function getNodes(node: any) {
   return (
-    includedNodeTypes.some((type) => node.type.includes(type)) &&
-    node.name && !excludedNodeNames.some((name) => node.name?.includes(name))
+    includedNodeTypes.some((type) => node.type.includes(type)) && !excludedNodeNames.some((name) => node.name?.includes(name))
   );
 }
-// 스타일 노드
+
 function getStyledNode(node: any): any {
   let styles = {
     fill: undefined,
@@ -75,6 +68,7 @@ function getStyledNode(node: any): any {
   }
   return styles;
 }
+
 function getArray(array, item) {
   if (Array.isArray(item)) {
     let itemExists = array.some(subArray => {
@@ -93,42 +87,12 @@ function getArray(array, item) {
   }
   return array;
 }
+
 // 스타일 이름
 function getStyleName(styleId: string): string | undefined {
-  // styleId가 문자열인지 확인하고, 빈 문자열이 아닌지도 체크합니다.
-  if (typeof styleId === 'string' && styleId.trim() !== '') {
-    // figma.getStyleById를 호출하여 스타일 객체를 가져옵니다.
-    // 옵셔널 체이닝을 사용하여 name 속성이 존재하는 경우에만 접근합니다.
-    const style = figma.getStyleById(styleId);
-    return style?.name;
-  } else {
-    // styleId가 유효하지 않은 경우, 콘솔에 경고를 출력하거나 undefined를 반환할 수 있습니다.
-    console.warn('Invalid styleId:', styleId);
-    return undefined;
-  }
+  return typeof styleId === 'string' ? figma.getStyleById(styleId)?.name : undefined;
 }
 
-
-// 노드 정보
-let nodesinfos: any[] = []; // 배열로 초기화
-
-// 선택 노드 정보
-let selectedNodeinfos: any[] = []; // 배열로 초기화
-const selectedNodeinfo = {
-  name: [],
-  fill: [],
-  fills: [],
-  stroke: [],
-  strokes: [],
-  effect: [],
-  text: [],
-  textStyle: [],
-  height: [],
-  radius: [],
-  padding: [],
-  defaultVariant: [],
-  nodeType: []
-};
 function setNodeInfo(nodes,info){
     if(Array.isArray(nodes.children)){
       nodes.children.forEach((childNode: any) => {
@@ -168,14 +132,35 @@ function setNodeInfo(nodes,info){
         if (styleNodes.padding) {
           info.padding = getArray(info.padding,[styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft]);
         }
-        info.defaultVariant = nodes.defaultVariant;
-        info.nodeType = nodes.parent.type ===  'COMPONENT_SET' || nodes.type;
+        // info.defaultVariant = nodes.type === 'INSTANCE'? 'COMPONENT_SET'?  Object.keys(nodes.parent.variantGroupProperties): nodes.children?.variantProperties : nodes.children?.name ;
+
     });}
 }
+
+// 선택 노드 정보
+let selectedNodeinfos: any[] = []; // 배열로 초기화
+const selectedNodeinfo = {
+  name: [],
+  fill: [],
+  fills: [],
+  stroke: [],
+  strokes: [],
+  effect: [],
+  text: [],
+  textStyle: [],
+  height: [],
+  radius: [],
+  padding: [],
+  defaultVariant: [],
+  nodeType: []
+};
+// 노드 정보
+let nodesinfos: any[] = []; // 배열로 초기화
+
 // 각 페이지의 노드 정보
 function getNodeInfo() {
   if (nodesinfos.length>0) return;
-  const isPages = getPages();
+    const isPages = getPages();
     isPages.forEach((page: any) => {
       //필터된 노드
       const isNodes = page.children.filter((node: any) => getNodes(node));
