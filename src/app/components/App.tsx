@@ -8,7 +8,6 @@ import Container from '@mui/material/Container';
 import {CustomTabPanel, a11yProps} from "./CustomTabPanel"
 import {ScrollTop, Props} from "./ScrollTop"
 function App(props: Props) {
-  const [loading, setLoading] = useState(false);
   const [nodeInfos, setNodeInfos] = useState(null);
   const [nodeNames, setNodeName] = useState(null);
   const [nodeProperty, setProperty] = useState(null);
@@ -24,19 +23,15 @@ function App(props: Props) {
       const { data: eventData } = event;
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_infos') {
         setNodeInfos(eventData.pluginMessage.nodesInfos);
-        setLoading(false);
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_names') {
         setNodeName(eventData.pluginMessage.nodeNames);
-        setLoading(false);
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_Property') {
         setProperty(eventData.pluginMessage.property);
-        setLoading(false);
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_selected') {
         setNodeSelected(eventData.pluginMessage.seletedNode);
-        setLoading(false);
       }
       if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_reset') {
         setNodeSelected(eventData.pluginMessage.seletedNode);
@@ -49,7 +44,6 @@ function App(props: Props) {
   };
 
   const handleInfos = () => {
-    setLoading(true);
     window.parent.postMessage({ pluginMessage: { type: 'request_infos' } }, '*');
   }
 
