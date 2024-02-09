@@ -138,12 +138,8 @@ function setNodeInfo(nodes,info){
     });}
 }
 
-
-// 노드 정보
-let nodesInfos: any[] = []; // 배열로 초기화
-
-// 각 페이지의 노드 정보
 function getNodeInfo() {
+  let nodesInfos: any[] = []; // 배열로 초기화
   if (nodesInfos.length>0) return;
     const isPages = getPages();
     isPages.forEach((page: any) => {
@@ -193,30 +189,31 @@ function getNodeInfo() {
       });
       nodesInfos = [...nodesInfos, nodesInfo];
     });
+  return nodesInfos;
 }
 
-let seletedNodes: any[] = []; // 배열로 초기화
-const seletedNode = {
-  name: [],
-  fill: [],
-  fills: [],
-  stroke: [],
-  strokes: [],
-  effect: [],
-  text: [],
-  textStyle: [],
-  height: [],
-  radius: [],
-  padding: [],
-  defaultVariant: [],
-  nodeType: []
-};
-
 function getSelectedNodeInfo(selectedNodes: any) {
+  let seletedNodes: any[] = []; // 배열로 초기화
+  const seletedNode = {
+    name: [],
+    fill: [],
+    fills: [],
+    stroke: [],
+    strokes: [],
+    effect: [],
+    text: [],
+    textStyle: [],
+    height: [],
+    radius: [],
+    padding: [],
+    defaultVariant: [],
+    nodeType: []
+  };  
   selectedNodes.forEach((selectedNode)=>{
     setNodeInfo(selectedNode, seletedNode)
     return seletedNodes = [...seletedNodes,seletedNode];;
   })
+  return  seletedNodes;
 }
 
 figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
@@ -224,7 +221,7 @@ figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
 figma.ui.onmessage = (message) => {
   switch(message.type){
     case 'request_infos':
-      getNodeInfo()
+      const nodesInfos = getNodeInfo()
       figma.ui.postMessage({
         type: 'get_infos',
         nodesInfos,  
@@ -240,7 +237,6 @@ figma.ui.onmessage = (message) => {
       const propertys = nodesInfos.flatMap(node => 
         node.nodes.flatMap(node => node.defaultVariant)
       );
- 
       const property = [...new Set(propertys)].sort();
       figma.ui.postMessage({
         type: 'get_Property',
@@ -248,7 +244,7 @@ figma.ui.onmessage = (message) => {
       });  
       break;
     case 'request_selected':
-      getSelectedNodeInfo(figma.currentPage.selection)  
+      const seletedNode = getSelectedNodeInfo(figma.currentPage.selection)  
       figma.ui.postMessage({
         type: 'get_selected',
         seletedNode,
