@@ -1,3 +1,4 @@
+
 // 제외 페이지명
 const excludedPageNames = ['A1', 'A2', '▼', 'C1', 'Container', 'Cover', 'Scroll', '(작업중)','(검토중)','Heading', '📌'];
 // 포함 노드타입
@@ -8,7 +9,6 @@ const excludedNodeNames = ['example', 'document', 'sample', 'dev', '_', '-dev', 
 function getPages() {
   return figma.root.children.filter((node) => node.type === 'PAGE' && !excludedPageNames.some((name) => node.name?.includes(name)));
 }
-
 
 function getNodes(node: any) {
   return (
@@ -56,7 +56,7 @@ function getStyledNode(node: any): any {
   if (node.paddingBottom || node.paddingLeft || node.paddingRight || node.paddingTop) {
     styles.padding = node;
   }
-  if ('children' in node && node.children.length > 0) {
+  if (node?.children?.length > 0) {
     node.children.forEach(child => {
       let childStyles = getStyledNode(child);
       Object.keys(styles).forEach(key => {
@@ -76,19 +76,16 @@ function getArray(array, item) {
         return element === item[index];
       });
     });
-  
     if (!itemExists) {
       array=[...array,item]
     }
   }
-    
   if (!Array.isArray(item) && !array.includes(item)) {
     array=[...array,item]
   }
   return array;
 }
 
-// 스타일 이름
 function getStyleName(styleId: string): string | undefined {
   return typeof styleId === 'string' ? figma.getStyleById(styleId)?.name : undefined;
 }
@@ -96,9 +93,7 @@ function getStyleName(styleId: string): string | undefined {
 function setNodeInfo(nodes,info){
     if(Array.isArray(nodes.children)){
       nodes.children.forEach((childNode: any) => {
-        //스타일 노드
         const styleNodes = getStyledNode(childNode);
-        //노드 스타일 정보
         if (nodes.name) {
           info.name = nodes.parent.type === 'COMPONENT_SET'? getArray(info.name,nodes.parent.name): getArray(info.name,nodes.name);
         }
@@ -132,39 +127,29 @@ function setNodeInfo(nodes,info){
         if (styleNodes.padding) {
           info.padding = getArray(info.padding,[styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft]);
         }
-        // info.defaultVariant = nodes.type === 'INSTANCE'? 'COMPONENT_SET'?  Object.keys(nodes.parent.variantGroupProperties): nodes.children?.variantProperties : nodes.children?.name ;
-
+        if (nodes.parent.type === 'INSTANCE') {
+          info.defaultVariant = nodes.children?.variantProperties}
+        if(nodes.parent.type === 'COMPONENT_SET'){
+            info.defaultVariant = Object.keys(nodes.parent.variantGroupProperties);
+        }
+        if(nodes.parent.type === 'COMPONENT'){
+          info.defaultVariant = nodes.children?.variantProperties;
+        }
     });}
 }
 
-// 선택 노드 정보
-let selectedNodeinfos: any[] = []; // 배열로 초기화
-const selectedNodeinfo = {
-  name: [],
-  fill: [],
-  fills: [],
-  stroke: [],
-  strokes: [],
-  effect: [],
-  text: [],
-  textStyle: [],
-  height: [],
-  radius: [],
-  padding: [],
-  defaultVariant: [],
-  nodeType: []
-};
+
 // 노드 정보
-let nodesinfos: any[] = []; // 배열로 초기화
+let nodesInfos: any[] = []; // 배열로 초기화
 
 // 각 페이지의 노드 정보
 function getNodeInfo() {
-  if (nodesinfos.length>0) return;
+  if (nodesInfos.length>0) return;
     const isPages = getPages();
     isPages.forEach((page: any) => {
       //필터된 노드
       const isNodes = page.children.filter((node: any) => getNodes(node));
-      const nodesinfo:any = {
+      const nodesInfo:any = {
         pageName: page.name,
         pageCount: page.length,
         nodes:[],
@@ -203,63 +188,80 @@ function getNodeInfo() {
             setNodeInfo(childNode, nodeInfo)
           });
         }
-        nodesinfo.nodes = [...nodesinfo.nodes, nodeInfo];
+        nodesInfo.nodes = [...nodesInfo.nodes, nodeInfo];
 
       });
-      nodesinfos = [...nodesinfos, nodesinfo];
+      nodesInfos = [...nodesInfos, nodesInfo];
     });
 }
+
+let seletedNodes: any[] = []; // 배열로 초기화
+const seletedNode = {
+  name: [],
+  fill: [],
+  fills: [],
+  stroke: [],
+  strokes: [],
+  effect: [],
+  text: [],
+  textStyle: [],
+  height: [],
+  radius: [],
+  padding: [],
+  defaultVariant: [],
+  nodeType: []
+};
+
 function getSelectedNodeInfo(selectedNodes: any) {
   selectedNodes.forEach((selectedNode)=>{
-    setNodeInfo(selectedNode, selectedNodeinfo)
-    return selectedNodeinfos = [...selectedNodeinfos,selectedNodeinfo];;
+    setNodeInfo(selectedNode, seletedNode)
+    return seletedNodes = [...seletedNodes,seletedNode];;
   })
 }
-
-
 
 figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
 
 figma.ui.onmessage = (message) => {
-
-  if (message.type === 'open-external-link') {
-    figma.notify(`브라우저에서 붙여넣기`);
+  switch(message.type){
+    case 'request_infos':
+      getNodeInfo()
+      figma.ui.postMessage({
+        type: 'get_infos',
+        nodesInfos,  
+      });
+      const nodeNames = nodesInfos.map((node) => ({
+        pageName: node.pageName,
+        nodes: node.nodes.map((node: { name: any }) => node.name),
+      }));
+      figma.ui.postMessage({
+        type: 'get_names',
+        nodeNames,
+      });      
+      const propertys = nodesInfos.flatMap(node => 
+        node.nodes.flatMap(node => node.defaultVariant)
+      );
+ 
+      const property = [...new Set(propertys)].sort();
+      figma.ui.postMessage({
+        type: 'get_Property',
+        property,
+      });  
+      break;
+    case 'request_selected':
+      getSelectedNodeInfo(figma.currentPage.selection)  
+      figma.ui.postMessage({
+        type: 'get_selected',
+        seletedNode,
+      });
+      break;
+    case 'request_reset':
+      figma.ui.postMessage({
+        type: 'get_reset',
+        seletedNode: null,
+      });
+      break;
+    case 'open-external-link':
+      figma.notify(`브라우저에서 붙여넣기`);
+      break;
   }
-
-  if (message.type === 'request_style') {
-    if (nodesinfos.length === 0) {
-      getNodeInfo();
-    }
-  }
-  if (message.type === 'request_reset') {
-      nodesinfos.length= 0
-      selectedNodeinfos.length = 0;
-  }
-  if (message.type === 'request_selected') {
-    selectedNodeinfos = [];
-    if (figma.currentPage.selection) {
-      getSelectedNodeInfo(figma.currentPage.selection);
-    }
-  }
-  figma.ui.postMessage({
-    type: 'get_style',
-    nodeStyle: nodesinfos,
-  });
-  const nodeNames = nodesinfos.map((pc) => ({
-    pageName: pc.pageName,
-    nodeNames: pc.nodes.map((node: { name: any }) => node.name),
-  }));
-  figma.ui.postMessage({
-    type: 'get_name',
-    nodeName: nodesinfos.length>0?nodeNames:0,
-  });
-  figma.ui.postMessage({
-    type: 'get_selected',
-    seletedNode: selectedNodeinfos,
-  });
-  figma.ui.postMessage({
-    type: 'get_reset',
-    nodeStyle: nodesinfos,
-    seletedNode: selectedNodeinfos,
-  });
 };
