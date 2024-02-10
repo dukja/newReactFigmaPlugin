@@ -30,6 +30,10 @@ function getStack(type) {
 // asset
 // 텍스트 입력
 // 버튼 상태 변경
+// 샘플 노드 처리, slot 노드 처리
+// 재사용 컴포넌트 처리
+// 리뷰 컴포넌트
+// 컨벤션
 
 
 figma.showUI(__html__, { width: 600, height: 520, title: 'Create Node' });
