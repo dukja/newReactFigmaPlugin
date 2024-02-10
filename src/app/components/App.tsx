@@ -82,7 +82,7 @@ function App(props: Props) {
     return(
       <Stack direction={"row"} spacing={1} sx={{backgroundColor:"rgba(0, 0, 0, 0.05)",padding:"6px", borderRadius:"12px"}}>
         <Button onClick={handleInfos} disabled={nodeInfos!==null || nodeInfos}>{nodeInfos? `Loaded`:`Loading`}</Button>
-        <Button onClick={handleCopy}>Copy</Button>
+        <Button onClick={handleCopy} disabled={!nodeInfos}>Copy</Button>
       </Stack>
     )
   }
@@ -115,9 +115,9 @@ function App(props: Props) {
               </CustomTabPanel>
               <CustomTabPanel value={value} index={3}>
                 <Stack direction={"row"} spacing={1} sx={{backgroundColor:"rgba(0, 0, 0, 0.05)",padding:"6px", borderRadius:"12px"}}>
-                    <Button onClick={handleGetInfo} {...a11yProps(2)}>selected Style</Button>
-                    <Button onClick={handleReset}>Reset</Button>
-                    <Button onClick={handleCopy}>Copy</Button>
+                    <Button onClick={handleGetInfo} {...a11yProps(2)} disabled={seletedNode !== null}>selected Style</Button>
+                    <Button onClick={handleReset} disabled={!seletedNode}>Reset</Button>
+                    <Button onClick={handleCopy} disabled={!seletedNode}>Copy</Button>
                 </Stack>
                 <Typography ref={selectedContentRef} id="nodeStyleContent" color="text.secondary" sx={{whiteSpace:"pre"}} variant="caption">{seletedNode &&  JSON.stringify(seletedNode, null, 2)}</Typography>
               </CustomTabPanel>
