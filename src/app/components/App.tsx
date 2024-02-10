@@ -32,7 +32,7 @@ function App(props: Props) {
         <Stack sx={{marginTop:"48px"}}>
           <CustomTabPanel value={value} index={0}>
           <Stack direction={"row"} spacing={1} sx={{backgroundColor:"rgba(0, 0, 0, 0.05)",padding:"6px", borderRadius:"12px"}}>
-            <Button onClick={handleCreate}>Create</Button>
+            <Button onClick={handleCreate} disabled={!nodeType}>Create</Button>
           </Stack>
           <FormControl sx={{marginTop:"16px"}}>
             <FormLabel id="demo-radio-buttons-group-label">에셋을 선택하고 Node Type을 선택한 후 생성해 주세요</FormLabel>

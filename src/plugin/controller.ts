@@ -1,17 +1,17 @@
 
 function setNode(name) {
   const frame = figma.createFrame();
-  frame.name = name; 
-  frame.layoutMode = "HORIZONTAL"; 
-  frame.primaryAxisSizingMode = "AUTO";
-  frame.counterAxisSizingMode = "AUTO"; 
-  figma.currentPage.appendChild(frame);
-  frame.fills = [{
-    type: 'SOLID', // 채우기 타입: 단색
-    color: { r: 1, g: 1, b: 1 }, // 색상: 흰색 (RGB 값은 모두 1)
-    opacity: 0 // 투명도: 0 (완전 투명)
-  }];
-  return frame; 
+  return Object.assign(frame,{  
+    name : name, 
+    layoutMode : "HORIZONTAL", 
+    primaryAxisSizingMode : "AUTO",
+    counterAxisSizingMode : "AUTO", 
+    fills : [{
+      type: 'SOLID', 
+      color: { r: 1, g: 1, b: 1 }, 
+      opacity: 0
+    }]
+  }); 
 }
 
 function getStack(type) {
@@ -22,10 +22,15 @@ function getStack(type) {
   }
 }
 // 이미지 일때 내부 노드
-// 스택 선택 노드
+// 스택 상태 노드
 // 그리드 샘플
 // 테이블 샘플
 // 이미지 샘플
+// 스페이싱
+// asset
+// 텍스트 입력
+// 버튼 상태 변경
+
 
 figma.showUI(__html__, { width: 600, height: 520, title: 'Create Node' });
 
