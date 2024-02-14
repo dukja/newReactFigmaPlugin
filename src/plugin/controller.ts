@@ -127,14 +127,7 @@ function setNodeInfo(nodes,info){
         if (styleNodes.padding) {
           info.padding = getArray(info.padding,[styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft]);
         }
-        if (nodes.parent.type === 'INSTANCE') {
-          info.defaultVariant = nodes.children?.variantProperties}
-        if(nodes.parent.type === 'COMPONENT_SET'){
-            info.defaultVariant = Object.keys(nodes.parent.variantGroupProperties);
-        }
-        if(nodes.parent.type === 'COMPONENT'){
-          info.defaultVariant = nodes.children?.variantProperties;
-        }
+          info.defaultVariant = nodes.variantProperties;
     });}
 }
 
@@ -237,7 +230,9 @@ figma.ui.onmessage = (message) => {
       const propertys = nodesInfos.flatMap(node => 
         node.nodes.flatMap(node => node.defaultVariant)
       );
-      const property = [...new Set(propertys)].sort();
+      const property =  propertys.reduce((result, current) => {
+        return { ...result, ...current };
+      }, {})
       figma.ui.postMessage({
         type: 'get_Property',
         property,
