@@ -127,7 +127,7 @@ function setNodeInfo(nodes,info){
         if (styleNodes.padding) {
           info.padding = getArray(info.padding,[styleNodes.padding.paddingTop,styleNodes.padding.paddingRight,styleNodes.padding.paddingBottom,styleNodes.padding.paddingLeft]);
         }
-          info.defaultVariant = nodes.variantProperties;
+          info.defaultVariant = nodes.type === 'COMPONENT_SET'? Object.keys(nodes.variantGroupProperties): nodes.variantProperties;
     });}
 }
 
