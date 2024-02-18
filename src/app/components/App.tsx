@@ -1,18 +1,19 @@
-import React, { useRef,useState ,useEffect} from "react";
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Container from '@mui/material/Container';
-import {CustomTabPanel, a11yProps} from "./CustomTabPanel"
-import {ScrollTop, Props} from "./ScrollTop"
+
+import React, { useState, useEffect, useRef} from "react";
+import { Tabs, Tab, Typography, Button, Stack, Container, TextField } from "@mui/material";
+import { CustomTabPanel, a11yProps } from "./CustomTabPanel";
+import { ScrollTop, Props } from "./ScrollTop";
+
+
+const initDataUrl = "https://v1.nocodeapi.com/dyha/google_sheets/unUHPFKJnjGTizzV?tabId=PageTabs"
 function App(props: Props) {
   const [nodeInfos, setNodeInfos] = useState(null);
   const [nodeNames, setNodeName] = useState(null);
   const [nodeProperty, setProperty] = useState(null);
   const [seletedNode, setNodeSelected] = useState(null);
   const [value, setValue] = React.useState(0);
+  const [dataUrl, setDataUrl] = React.useState(initDataUrl);
+  const [isUrlError, setIsUrlError] = useState(false); 
   const styleContentRef = useRef<HTMLPreElement | null>(null);
   const nameContentRef = useRef<HTMLPreElement | null>(null);
   const selectedContentRef = useRef<HTMLPreElement | null>(null);
@@ -21,39 +22,61 @@ function App(props: Props) {
   useEffect(() => {
     window.onmessage = (event) => {
       const { data: eventData } = event;
-      if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_infos') {
-        setNodeInfos(eventData.pluginMessage.nodesInfos);
+      switch(eventData.pluginMessage && eventData.pluginMessage.type){
+        case 'get_infos':
+          setNodeInfos(eventData.pluginMessage.nodesInfos);
+          break;
+        case 'get_names':
+          setNodeName(eventData.pluginMessage.nodeNames);
+          break;
+        case 'get_Property':
+          setProperty(eventData.pluginMessage.property);
+          break;
+        case 'get_selected':
+          setNodeSelected(eventData.pluginMessage.seletedNode);
+          break;
+        case 'get_dataUrl':
+          setIsUrlError(eventData.pluginMessage.isUrlError);
+          break;
       }
-      if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_names') {
-        setNodeName(eventData.pluginMessage.nodeNames);
-      }
-      if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_Property') {
-        setProperty(eventData.pluginMessage.property);
-      }
-      if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_selected') {
-        setNodeSelected(eventData.pluginMessage.seletedNode);
-      }
-      if (eventData.pluginMessage && eventData.pluginMessage.type === 'get_reset') {
-        setNodeSelected(eventData.pluginMessage.seletedNode);
-      }
+
     };
   }, []);
 
-  const handleChange = (_event: React.SyntheticEvent,newValue: number) => {
-    setValue(newValue);
-  };
+const handleChange = (_event: React.SyntheticEvent,newValue: number) => {
+  setValue(newValue);
+};
 
-  const handleInfos = () => {
-    window.parent.postMessage({ pluginMessage: { type: 'request_infos' } }, '*');
-  }
+const handleInfos = () => {
+  window.parent.postMessage({ pluginMessage: { type: 'request_infos' } }, '*');
+}
 
-  const handleReset = () => {
-    window.parent.postMessage({ pluginMessage: { type: 'request_reset' } }, '*');
-  }
+const handleReset = () => {
+  window.parent.postMessage({ pluginMessage: { type: 'request_reset' } }, '*');
+}
 
-  function handleGetInfo () {
-    window.parent.postMessage({ pluginMessage: { type: 'request_selected' } }, '*');
-  }
+function handleGetInfo () {
+  window.parent.postMessage({ pluginMessage: { type: 'request_selected' } }, '*');
+}
+function handleChangeDataUrl(e) {
+  const newUrl = e.target.value;
+  setDataUrl(newUrl); 
+  setIsUrlError(dataUrl===""||newUrl==="")
+}
+
+function handleDataUrlLoading () {
+    window.parent.postMessage({
+      pluginMessage: {
+        type: 'request_dataUrl',
+        dataUrl
+      }
+    }, '*');
+}
+
+function handleDataUrlReset (){
+  setDataUrl(initDataUrl); 
+  setIsUrlError(false)
+}
 
   const handleCopy = async () => {
     let content;
@@ -95,8 +118,9 @@ function App(props: Props) {
               <Tabs value={value} onChange={handleChange} aria-label="">
                 <Tab label="all nodes" {...a11yProps(0)} />
                 <Tab label="names" {...a11yProps(1)} />
-                <Tab label="property" {...a11yProps(1)} />
-                <Tab label="selected node" {...a11yProps(2)} />
+                <Tab label="property" {...a11yProps(2)} />
+                <Tab label="selected node" {...a11yProps(3)} />
+                <Tab label="create guide" {...a11yProps(4)} />
               </Tabs>
             </Stack>
             <Stack id="back-to-top-anchor" />
@@ -120,6 +144,15 @@ function App(props: Props) {
                     <Button onClick={handleCopy} disabled={!seletedNode}>Copy</Button>
                 </Stack>
                 <Typography ref={selectedContentRef} id="nodeStyleContent" color="text.secondary" sx={{whiteSpace:"pre"}} variant="caption">{seletedNode &&  JSON.stringify(seletedNode, null, 2)}</Typography>
+              </CustomTabPanel>
+              <CustomTabPanel value={value} index={4}>
+                <Stack direction={"row"} spacing={1} sx={{backgroundColor:"rgba(0, 0, 0, 0.05)",padding:"6px", borderRadius:"12px"}}>
+                    <Button onClick={handleDataUrlLoading}>data loading</Button>
+                    <Button onClick={handleDataUrlReset}>Reset</Button>
+                </Stack>
+                <Stack sx={{pt:2}}>
+                  <TextField id="outlined-basic" variant="outlined" label="data url" value={dataUrl} onChange={handleChangeDataUrl} error={isUrlError}  helperText={isUrlError ? "url이 적합하지 않아요":false}/>
+                </Stack>
               </CustomTabPanel>
               </Stack>
           </Container>

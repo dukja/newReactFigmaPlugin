@@ -86,6 +86,7 @@ function getArray(array, item) {
   return array;
 }
 
+
 function getStyleName(styleId: string): string | undefined {
   return typeof styleId === 'string' ? figma.getStyleById(styleId)?.name : undefined;
 }
@@ -209,6 +210,70 @@ function getSelectedNodeInfo(selectedNodes: any) {
   return  seletedNodes;
 }
 
+function getAutoFrame (name,{x=0,y=0,layoutMode='VERTICAL', primaryAxisSizingMode="AUTO", counterAxisSizingMode="AUTO"}){
+  const newNode = figma.createFrame();
+  return Object.assign(newNode,{  
+    name, 
+    layoutMode, 
+    primaryAxisSizingMode,
+    counterAxisSizingMode, 
+    x,
+    y,
+    fills : []
+  }); 
+}
+
+async function setData(datas) {
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+
+  const tbodyNode = getAutoFrame('tbody', {layoutMode:'VERTICAL'});
+  datas.forEach((data) => {
+    const filterObjs = Object.keys(data).reduce((acc, key)=>{
+      if(key !== 'row_id'){
+          acc[key] = data [key]
+        }   
+        return acc   
+    },{})
+
+    console.log('filterObjs',filterObjs)
+    const trNode = getAutoFrame('tr', {layoutMode:'HORIZONTAL'});
+
+    Object.keys(filterObjs).forEach((key) => {
+        const textNode = figma.createText();
+        textNode.characters = filterObjs[key];
+        const tdNode = getAutoFrame('td', {layoutMode:'HORIZONTAL'});
+        tdNode.appendChild(textNode);
+        trNode.appendChild(tdNode);
+        tbodyNode.appendChild(trNode);
+        figma.currentPage.appendChild(tbodyNode);        
+    });
+
+})
+
+
+}    
+
+
+async function fetchData(url) {
+  try {
+    const response = await fetch(url);
+    const csvText = await response.text();
+    if (csvText.trim() === "") {
+      console.error("Fetched data is empty");
+      return false; 
+    }
+    const jsonData = JSON.parse(csvText);
+    setData(jsonData.data)
+    return jsonData;
+  } catch (error) {
+    console.error("Error fetching or processing CSV data:", error);
+    return false; 
+  }
+}
+
+
+
+
 figma.showUI(__html__, { width: 900, height: 600, title: 'CDS Asset Filter' });
 
 figma.ui.onmessage = (message) => {
@@ -253,6 +318,15 @@ figma.ui.onmessage = (message) => {
       break;
     case 'open-external-link':
       figma.notify(`브라우저에서 붙여넣기`);
+      break;
+    case 'request_dataUrl':   
+      fetchData(message.dataUrl).then((csvText) => {
+        figma.ui.postMessage({
+          type: 'get_dataUrl',
+          dataUrl: csvText?csvText:'',
+          isUrlError:false
+        });
+      })
       break;
   }
 };

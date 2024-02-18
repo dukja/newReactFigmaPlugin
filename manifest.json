@@ -7,6 +7,6 @@
   "editorType": ["figma"],
   "permissions": [],
   "networkAccess": {
-    "allowedDomains": ["none"]
+    "allowedDomains": ["https://v1.nocodeapi.com","https://httpbin.org"]
   }
 }
