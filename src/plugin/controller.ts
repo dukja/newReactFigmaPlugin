@@ -235,7 +235,7 @@ async function setData(datas) {
         return acc   
     },{})
 
-    console.log('filterObjs',filterObjs)
+    // console.log('filterObjs',filterObjs)
     const trNode = getAutoFrame('tr', {layoutMode:'HORIZONTAL'});
 
     Object.keys(filterObjs).forEach((key) => {
