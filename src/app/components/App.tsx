@@ -35,6 +35,9 @@ function App(props: Props) {
         case 'get_selected':
           setNodeSelected(eventData.pluginMessage.seletedNode);
           break;
+        case 'get_reset':
+          setNodeSelected(eventData.pluginMessage.seletedNode);
+          break;
         case 'get_dataUrl':
           setIsUrlError(eventData.pluginMessage.isUrlError);
           break;
